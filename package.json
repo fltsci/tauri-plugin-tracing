@@ -1,9 +1,13 @@
 {
   "name": "tauri-plugin-tracing",
-  "version": "0.1.0",
-  "author": "You",
+  "version": "0.1.1",
+  "author": "Flight Science",
   "description": "",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fltsci/tauri-plugin-tracing.git"
+  },
   "types": "./dist-js/index.d.ts",
   "main": "./dist-js/index.cjs",
   "module": "./dist-js/index.js",
