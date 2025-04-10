@@ -3,12 +3,6 @@ import { listen, type UnlistenFn, type Event } from "@tauri-apps/api/event";
 
 export type LogMessage = [unknown, ...unknown[]];
 
-export interface LogOptions {
-  file?: string;
-  line?: number;
-  keyValues?: Record<string, string | undefined>;
-}
-
 enum LogLevel {
   /**
    * The "trace" level.
@@ -164,9 +158,13 @@ const cleanMessage = (message: LogMessage): LogMessage => {
 //   }
 // }
 
-async function log(level: LogLevel, ...msg: LogMessage): Promise<void> {
+async function log(
+  level: LogLevel,
+  // options?: LogOptions,
+  callStack?: string,
+  ...msg: LogMessage
+): Promise<void> {
   // const location = getCallerLocation(new Error().stack);
-  const callStack = new Error().stack;
   const message = cleanMessage(msg);
   // const { file, line, keyValues } = options ?? {};
   return await invoke<void>("plugin:tracing|log", {
@@ -196,7 +194,7 @@ async function log(level: LogLevel, ...msg: LogMessage): Promise<void> {
  * ```
  */
 export async function error(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Error, ...message);
+  await log(LogLevel.Error, new Error().stack, ...message);
 }
 
 /**
@@ -215,7 +213,7 @@ export async function error(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function warn(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Warn, ...message);
+  await log(LogLevel.Warn, new Error().stack, ...message);
 }
 
 /**
@@ -234,7 +232,7 @@ export async function warn(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function info(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Info, ...message);
+  await log(LogLevel.Info, new Error().stack, ...message);
 }
 
 /**
@@ -253,7 +251,7 @@ export async function info(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function debug(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Debug, ...message);
+  await log(LogLevel.Debug, new Error().stack, ...message);
 }
 
 /**
@@ -272,7 +270,7 @@ export async function debug(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function trace(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Trace, ...message);
+  await log(LogLevel.Trace, new Error().stack, ...message);
 }
 
 interface RecordPayload {

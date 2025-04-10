@@ -2,10 +2,10 @@ use tauri::{
     plugin::{self, TauriPlugin},
     Manager, Runtime,
 };
-use tracing_log::log::LevelFilter;
+use tracing_log::{log::LevelFilter, AsTrace};
 use tracing_subscriber::fmt::SubscriberBuilder;
 
-use crate::{commands, desktop, util::attach_logger};
+use crate::{commands, desktop, Error};
 
 #[derive(Default)]
 pub struct Builder(SubscriberBuilder);
@@ -25,10 +25,6 @@ impl std::ops::DerefMut for Builder {
 }
 
 impl Builder {
-    pub fn new() -> Self {
-        Builder(tracing_subscriber::FmtSubscriber::builder())
-    }
-
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![commands::log])
     }
@@ -40,11 +36,25 @@ impl Builder {
                 let plugin = desktop::init(app, api)?;
 
                 app.manage(plugin);
-                attach_logger(LevelFilter::Trace)?;
+                let builder = self.with_max_level(LevelFilter::Trace);
+                attach_logger(builder)?;
                 Ok(())
             })
             .build()
     }
+
+    pub fn with_max_level(mut self, max_level: LevelFilter) -> Self {
+        self.0 = self.0.with_max_level(max_level.as_trace());
+        self
+    }
+}
+
+fn attach_logger(subscriber: Builder) -> Result<(), Error> {
+    tracing::subscriber::set_global_default(subscriber.0.finish())?;
+
+    ::tracing::info!("tracing initialized");
+
+    Ok(())
 }
 
 // if !self.is_skip_logger {

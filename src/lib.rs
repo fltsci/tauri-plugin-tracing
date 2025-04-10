@@ -16,10 +16,7 @@ pub use builder::Builder;
 pub use error::{Error, Result};
 pub use tracing;
 pub use tracing_appender;
-pub use tracing_log::{
-    log::{LevelFilter, Record},
-    AsTrace,
-};
+pub use tracing_log::log::LevelFilter;
 pub use tracing_subscriber;
 
 #[cfg(desktop)]
@@ -38,5 +35,7 @@ impl<R: Runtime, T: Manager<R>> crate::TracingExt<R> for T {
 
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    crate::Builder::default().build()
+    crate::Builder::default()
+        .with_max_level(LevelFilter::Trace)
+        .build()
 }

@@ -1,19 +1,3 @@
-use tracing_log::{log::LevelFilter, AsTrace};
-
-use crate::Error;
-
-pub fn attach_logger(max_level: LevelFilter) -> Result<(), Error> {
-    let subscriber = tracing_subscriber::FmtSubscriber::builder()
-        .with_max_level(max_level.as_trace())
-        .finish();
-
-    tracing::subscriber::set_global_default(subscriber)?;
-
-    ::tracing::info!("tracing initialized");
-
-    Ok(())
-}
-
 // use std::{
 //     fs::{self, File},
 //     path::{Path, PathBuf},
