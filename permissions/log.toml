@@ -1,0 +1,11 @@
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-log"
+description = "Enables the log command."
+commands.allow = ["log"]
+
+[[permission]]
+identifier = "deny-log"
+description = "Denies the log command."
+commands.deny = ["log"]
