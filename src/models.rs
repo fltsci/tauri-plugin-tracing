@@ -1,3 +1,4 @@
+use colored::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -22,6 +23,59 @@ impl std::ops::DerefMut for LogMessage {
 impl std::fmt::Display for LogMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.join(", "))
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CallStackLine(String);
+
+impl std::ops::Deref for CallStackLine {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for CallStackLine {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl std::fmt::Display for CallStackLine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.dimmed())
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CallStack(pub Vec<CallStackLine>);
+
+impl From<Option<&str>> for CallStack {
+    fn from(value: Option<&str>) -> Self {
+        let lines = value
+            .unwrap_or("")
+            .split("\n")
+            .map(|line| CallStackLine(line.to_string()))
+            .collect();
+        Self(lines)
+    }
+}
+
+impl CallStack {
+    pub fn new(value: Option<&str>) -> Self {
+        CallStack::from(value)
+    }
+
+    pub fn location(&self) -> &CallStackLine {
+        let filtered = self
+            .0
+            .iter()
+            .filter(|line| !line.contains("node_modules"))
+            .collect::<Vec<&CallStackLine>>()
+            .clone();
+        filtered[filtered.len() - 1]
     }
 }
 
@@ -83,8 +137,6 @@ impl From<tracing_log::log::Level> for LogLevel {
         }
     }
 }
-
-// pub const WEBVIEW_TARGET: &str = "webview";
 
 // const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
 // const DEFAULT_ROTATION_STRATEGY: RotationStrategy = RotationStrategy::KeepOne;

@@ -26,6 +26,7 @@ tracing-subscriber = "0.3.19"
 tracing-appender = "0.2.3"
 tracing-log = "0.2.0"
 schemars = "0.8.22"
+colored = "3.0.0"
 
 [features]
 colored = ["fern/colored"]
