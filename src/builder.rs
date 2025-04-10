@@ -10,20 +10,6 @@ use crate::{commands, desktop, Error};
 #[derive(Default)]
 pub struct Builder(SubscriberBuilder);
 
-impl std::ops::Deref for Builder {
-    type Target = SubscriberBuilder;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for Builder {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl Builder {
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![commands::log])
@@ -36,8 +22,7 @@ impl Builder {
                 let plugin = desktop::init(app, api)?;
 
                 app.manage(plugin);
-                let builder = self.with_max_level(LevelFilter::Trace);
-                attach_logger(builder)?;
+                attach_logger(self)?;
                 Ok(())
             })
             .build()

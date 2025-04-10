@@ -33,9 +33,7 @@ impl<R: Runtime, T: Manager<R>> crate::TracingExt<R> for T {
     }
 }
 
-/// Initializes the plugin.
+/// Initializes the plugin with default settings.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    crate::Builder::default()
-        .with_max_level(LevelFilter::Trace)
-        .build()
+    crate::Builder::default().build()
 }
