@@ -49,6 +49,12 @@ impl std::fmt::Display for CallStackLine {
     }
 }
 
+impl CallStackLine {
+    pub fn replace(&self, from: &str, to: &str) -> Self {
+        CallStackLine(self.0.replace(from, to))
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CallStack(pub Vec<CallStackLine>);
 
@@ -68,14 +74,15 @@ impl CallStack {
         CallStack::from(value)
     }
 
-    pub fn location(&self) -> &CallStackLine {
+    pub fn location(&self) -> CallStackLine {
         let filtered = self
             .0
             .iter()
-            .filter(|line| !line.contains("node_modules"))
-            .collect::<Vec<&CallStackLine>>()
+            .filter(|line| !line.contains("node_modules") && line.contains("src"))
+            .map(|line| line.replace("@http://localhost:1420/", ""))
+            .collect::<Vec<CallStackLine>>()
             .clone();
-        filtered[filtered.len() - 1]
+        filtered[filtered.len() - 1].clone()
     }
 }
 
@@ -114,113 +121,26 @@ pub enum LogLevel {
     Error,
 }
 
-impl From<LogLevel> for tracing_log::log::Level {
+impl From<LogLevel> for tracing::Level {
     fn from(log_level: LogLevel) -> Self {
         match log_level {
-            LogLevel::Trace => tracing_log::log::Level::Trace,
-            LogLevel::Debug => tracing_log::log::Level::Debug,
-            LogLevel::Info => tracing_log::log::Level::Info,
-            LogLevel::Warn => tracing_log::log::Level::Warn,
-            LogLevel::Error => tracing_log::log::Level::Error,
+            LogLevel::Trace => tracing::Level::TRACE,
+            LogLevel::Debug => tracing::Level::DEBUG,
+            LogLevel::Info => tracing::Level::INFO,
+            LogLevel::Warn => tracing::Level::WARN,
+            LogLevel::Error => tracing::Level::ERROR,
         }
     }
 }
 
-impl From<tracing_log::log::Level> for LogLevel {
-    fn from(log_level: tracing_log::log::Level) -> Self {
+impl From<tracing::Level> for LogLevel {
+    fn from(log_level: tracing::Level) -> Self {
         match log_level {
-            tracing_log::log::Level::Trace => LogLevel::Trace,
-            tracing_log::log::Level::Debug => LogLevel::Debug,
-            tracing_log::log::Level::Info => LogLevel::Info,
-            tracing_log::log::Level::Warn => LogLevel::Warn,
-            tracing_log::log::Level::Error => LogLevel::Error,
+            tracing::Level::TRACE => LogLevel::Trace,
+            tracing::Level::DEBUG => LogLevel::Debug,
+            tracing::Level::INFO => LogLevel::Info,
+            tracing::Level::WARN => LogLevel::Warn,
+            tracing::Level::ERROR => LogLevel::Error,
         }
     }
 }
-
-// const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
-// const DEFAULT_ROTATION_STRATEGY: RotationStrategy = RotationStrategy::KeepOne;
-// const DEFAULT_TIMEZONE_STRATEGY: TimezoneStrategy = TimezoneStrategy::UseUtc;
-// const DEFAULT_LOG_TARGETS: [Target; 2] = [
-//     Target::new(TargetKind::Stdout),
-//     Target::new(TargetKind::LogDir { file_name: None }),
-// ];
-
-// #[derive(Debug, Clone, Default)]
-// pub enum RotationStrategy {
-//     #[default]
-//     KeepAll,
-//     KeepOne,
-// }
-
-// #[derive(Debug, Clone, Default)]
-// pub enum TimezoneStrategy {
-//     #[default]
-//     UseUtc,
-//     UseLocal,
-// }
-
-// /// An enum representing the available targets of the logger.
-// pub enum TargetKind {
-//     /// Print logs to stdout.
-//     Stdout,
-//     /// Print logs to stderr.
-//     Stderr,
-//     /// Write logs to the given directory.
-//     ///
-//     /// The plugin will ensure the directory exists before writing logs.
-//     Folder {
-//         path: PathBuf,
-//         file_name: Option<String>,
-//     },
-//     /// Write logs to the OS specific logs directory.
-//     ///
-//     /// ### Platform-specific
-//     ///
-//     /// |Platform | Value                                                                                     | Example                                                     |
-//     /// | ------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-//     /// | Linux   | `$XDG_DATA_HOME/{bundleIdentifier}/logs` or `$HOME/.local/share/{bundleIdentifier}/logs`  | `/home/alice/.local/share/com.tauri.dev/logs`               |
-//     /// | macOS   | `{homeDir}/Library/Logs/{bundleIdentifier}`                                               | `/Users/Alice/Library/Logs/com.tauri.dev`                   |
-//     /// | Windows | `{FOLDERID_LocalAppData}/{bundleIdentifier}/logs`                                         | `C:\Users\Alice\AppData\Local\com.tauri.dev\logs`           |
-//     LogDir { file_name: Option<String> },
-//     /// Forward logs to the webview (via the `log://log` event).
-//     ///
-//     /// This requires the webview to subscribe to log events, via this plugin's `attachConsole` function.
-//     Webview,
-// }
-
-// impl TimezoneStrategy {
-//     pub fn get_now(&self) -> OffsetDateTime {
-//         match self {
-//             TimezoneStrategy::UseUtc => OffsetDateTime::now_utc(),
-//             TimezoneStrategy::UseLocal => {
-//                 OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc())
-//             } // Fallback to UTC since Rust cannot determine local timezone
-//         }
-//     }
-// }
-
-// /// A log target.
-// pub struct Target {
-//     pub kind: TargetKind,
-//     pub filters: Vec<Box<Filter>>,
-// }
-
-// impl Target {
-//     #[inline]
-//     pub const fn new(kind: TargetKind) -> Self {
-//         Self {
-//             kind,
-//             filters: Vec::new(),
-//         }
-//     }
-
-//     #[inline]
-//     pub fn filter<F>(mut self, filter: F) -> Self
-//     where
-//         F: Fn(&tracing_log::log::Metadata) -> bool + Send + Sync + 'static,
-//     {
-//         self.filters.push(Box::new(filter));
-//         self
-//     }
-// }

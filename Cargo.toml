@@ -1,32 +1,22 @@
 [package]
 name = "tauri-plugin-tracing"
-version = "0.1.0"
-authors = ["John Carmack"]
+version = "0.1.1"
+authors = ["Flight Science"]
 description = ""
-edition = "2021"
-rust-version = "1.77.2"
+edition = "2024"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-tracing"
 
 [build-dependencies]
-tauri-plugin = { version = "2.1.1", features = ["build"] }
+tauri-plugin = { version = "2.2.0", features = ["build"] }
 
 [dependencies]
-serde = "1.0.219"
-serde_json = "1.0.140"
-tauri = { version = "2.4.1" }
-thiserror = "2"
+serde = { version = "1.0.217", default-features = false }
+tauri = { version = "2.5.1", default-features = false }
+thiserror = { version = "2.0.12", default-features = false }
 serde_repr = "0.1.20"
-byte-unit = "5.1.6"
-tracing = "0.1.41"
-time = { version = "0.3.41", features = ["formatting", "local-offset"] }
-fern = "0.7.1"
-tauri-plugin-window-state = "2.2.2"
-tracing-subscriber = "0.3.19"
+tracing = { version = "0.1.41", default-features = false }
+time = { version = "0.3.41", default-features = false }
 tracing-appender = "0.2.3"
-tracing-log = "0.2.0"
-schemars = "0.8.22"
+tracing-subscriber = { version = "0.3.19", default-features = false }
 colored = "3.0.0"
-
-[features]
-colored = ["fern/colored"]

@@ -1,8 +1,8 @@
-use tauri::{command, AppHandle, Runtime};
-use tracing::{event, Level};
+use tauri::{AppHandle, Runtime, command};
+use tracing::{Level, event};
 
-use crate::models::*;
 use crate::Result;
+use crate::models::*;
 
 const TARGET: &str = "webview";
 
