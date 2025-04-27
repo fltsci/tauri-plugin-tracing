@@ -10,7 +10,8 @@ on:
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -24,6 +25,8 @@ jobs:
 
   prettier:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Cache pnpm modules
