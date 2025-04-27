@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@fltsci/tauri-plugin-tracing':
+        specifier: file:../../
+        version: file:../..
       '@tauri-apps/api':
         specifier: ^2.0.0
         version: 2.4.1
@@ -20,9 +23,6 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.1.0(react@19.1.0)
-      tauri-plugin-tracing:
-        specifier: file:../../
-        version: file:../..
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -283,6 +283,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fltsci/tauri-plugin-tracing@file:../..':
+    resolution: {directory: ../.., type: directory}
 
   '@jridgewell/gen-mapping@0.3.8':
     resolution: {integrity: sha512-imAbBGkb+ebQyxKgzv5Hu2nmROxoDOXHh80evxdoXNOrvAnVx7zimzc1Oo5h9RlfV4vPXaE2iM5pOFbvOCClWA==}
@@ -623,9 +626,6 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
-  tauri-plugin-tracing@file:../..:
-    resolution: {directory: ../.., type: directory}
-
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -874,6 +874,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.2':
     optional: true
+
+  '@fltsci/tauri-plugin-tracing@file:../..':
+    dependencies:
+      '@tauri-apps/api': 2.4.1
 
   '@jridgewell/gen-mapping@0.3.8':
     dependencies:
@@ -1169,10 +1173,6 @@ snapshots:
   semver@6.3.1: {}
 
   source-map-js@1.2.1: {}
-
-  tauri-plugin-tracing@file:../..:
-    dependencies:
-      '@tauri-apps/api': 2.4.1
 
   typescript@5.8.3: {}
 

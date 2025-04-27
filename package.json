@@ -1,5 +1,5 @@
 {
-  "name": "tauri-plugin-tracing",
+  "name": "@fltsci/tauri-plugin-tracing",
   "version": "0.1.1",
   "author": "Flight Science",
   "description": "",

@@ -14,7 +14,7 @@
     "@tauri-apps/plugin-window-state": "~2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tauri-plugin-tracing": "file:../../",
+    "@fltsci/tauri-plugin-tracing": "file:../../",
     "zod": "^3.24.2"
   },
   "devDependencies": {
