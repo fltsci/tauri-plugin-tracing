@@ -1,18 +1,18 @@
-import { useState } from "react";
-import "./App.css";
-import { useLogger } from "./logger";
-import { useEffect } from "react";
-import { info } from "tauri-plugin-tracing";
+import { useState } from 'react'
+import './App.css'
+import { useLogger } from './logger'
+import { useEffect } from 'react'
+import { info } from 'tauri-plugin-tracing'
 
 function App() {
-  useLogger();
+  useLogger()
 
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
-    console.log("Forwarded from console.log", count);
-    info("Sent directly via plugin.info", count);
-  }, [count]);
+    console.log('Forwarded from console.log', count)
+    info('Sent directly via plugin.info', count)
+  }, [count])
 
   return (
     <>
@@ -23,7 +23,7 @@ function App() {
         </button>
       </div>
     </>
-  );
+  )
 }
 
-export default App;
+export default App

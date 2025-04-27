@@ -1,7 +1,7 @@
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
-const host = process.env.TAURI_DEV_HOST;
+const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig({
   plugins: [react()],
@@ -15,22 +15,22 @@ export default defineConfig({
     host: host || false,
     hmr: host
       ? {
-          protocol: "ws",
+          protocol: 'ws',
           host,
-          port: 1421,
+          port: 1421
         }
       : undefined,
     watch: {
       // tell vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
-    },
+      ignored: ['**/src-tauri/**']
+    }
   },
   // Env variables starting with the item of `envPrevfix` will be exposed in tauri's source code through `import.meta.env`
-  envPrefix: ["VITE_", "TAURI_ENV_"],
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
   build: {
     target:
-      process.env.TAURI_ENV_PLATFORM === "windows" ? "chrome126" : "safari15",
-    minify: process.env.TAURI_ENV_DEBUG ? false : "esbuild",
-    sourcemap: !!process.env.TAURI_ENV_DEBUG,
-  },
-});
+      process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome126' : 'safari15',
+    minify: process.env.TAURI_ENV_DEBUG ? false : 'esbuild',
+    sourcemap: !!process.env.TAURI_ENV_DEBUG
+  }
+})

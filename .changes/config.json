@@ -1,5 +1,5 @@
 {
-  "gitSiteUrl": "https://github.com/tauri-apps/plugins-workspace/",
+  "gitSiteUrl": "https://github.com/fltsci/tauri-plugin-tracing/",
   "pkgManagers": {
     "javascript": {
       "version": true,
@@ -20,8 +20,8 @@
           "pipe": true
         },
         {
-          "command": "npm publish --provenance --access public",
-          "dryRunCommand": "npm publish --provenance --access public --dry-run",
+          "command": "npm publish --provenance --access restricted",
+          "dryRunCommand": "npm publish --provenance --access restricted --dry-run",
           "pipe": true
         },
         {
@@ -59,11 +59,11 @@
     }
   },
   "packages": {
-    "tracing": {
+    "tauri-plugin-tracing": {
       "path": ".",
       "manager": "rust"
     },
-    "tracing-js": {
+    "@fltsci/tauri-plugin-tracing": {
       "path": ".",
       "manager": "javascript"
     }

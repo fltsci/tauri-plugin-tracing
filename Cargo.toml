@@ -1,3 +1,7 @@
+[workspace]
+members = ["examples/tauri-app/src-tauri"]
+resolver = "2"
+
 [package]
 name = "tauri-plugin-tracing"
 version = "0.1.1"
@@ -6,6 +10,7 @@ description = ""
 edition = "2024"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-tracing"
+repository = "https://github.com/fltsci/tauri-plugin-tracing"
 publish = ["kellnr"]
 
 [build-dependencies]
@@ -21,3 +26,11 @@ time = { version = "0.3.41", default-features = false }
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", default-features = false }
 colored = "3.0.0"
+
+# default to small, optimized release binaries
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+incremental = false
+opt-level = "s"

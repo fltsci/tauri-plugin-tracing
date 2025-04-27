@@ -15,7 +15,7 @@ pub(crate) async fn log<R: Runtime>(
 ) -> Result<()> {
     let stack = CallStack::from(call_stack);
     let location = stack.location();
-    Ok(match level {
+    match level {
         LogLevel::Trace => {
             event!(target: TARGET, Level::TRACE, %location, %message)
         }
@@ -34,5 +34,6 @@ pub(crate) async fn log<R: Runtime>(
             }
             event!(target: TARGET, Level::ERROR, %location, %message)
         }
-    })
+    };
+    Ok(())
 }

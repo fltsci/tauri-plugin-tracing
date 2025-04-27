@@ -1,0 +1,72 @@
+# Copyright 2019-2023 Tauri Programme within The Commons Conservancy
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+
+name: Lint Rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lint-rust.yml'
+      - 'src/**'
+      - '!./dist-js/**'
+      - '**/Cargo.toml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/lint-rust.yml'
+      - 'src/**'
+      - '!./dist-js/**'
+      - '**/Cargo.toml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            tauri-plugin-tracing:
+              - .github/workflows/lint-rust.yml
+              - ./**
+
+  clippy:
+    needs: changes
+    if: ${{ needs.changes.outputs.packages != '[]' && needs.changes.outputs.packages != '' }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install webkit2gtk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev
+
+      - name: Install clippy with stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: clippy ${{ matrix.package }}
+        run: cargo clippy --package ${{ matrix.package }} --all-targets -- -D warnings
+
+      - name: clippy ${{ matrix.package }} --all-features
+        run: cargo clippy --package ${{ matrix.package }} --all-targets --all-features -- -D warnings
