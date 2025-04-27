@@ -1,11 +1,13 @@
-# Copyright 2019-2023 Tauri Programme within The Commons Conservancy
-# SPDX-License-Identifier: Apache-2.0
-# SPDX-License-Identifier: MIT
-
 name: check formatting
 
 on:
   pull_request:
+
+env:
+  SCCACHE_GHA_ENABLED: 'true'
+  RUSTC_WRAPPER: 'sccache'
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: '-D warnings'
 
 jobs:
   rustfmt:
