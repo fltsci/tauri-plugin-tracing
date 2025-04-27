@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import {
-  type LogMessage,
   attachLogger,
   debug,
   error,
   info,
   trace,
   warn,
+  type LogMessage,
 } from "tauri-plugin-tracing";
 import { z } from "zod";
 

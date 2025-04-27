@@ -13,11 +13,8 @@ name = "tauri_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.1.1", default-features = false, features = [] }
+tauri-build = { version = "2.2.0", default-features = false, features = [] }
 
 [dependencies]
-tauri = { version = "2.4.1", features = [] }
+tauri = { version = "2.5.1", features = [] }
 tauri-plugin-tracing = { path = "../../../" }
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-window-state = "2"

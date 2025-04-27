@@ -10,13 +10,11 @@ mod commands;
 mod error;
 mod models;
 
-mod util;
-
 pub use builder::Builder;
 pub use error::{Error, Result};
 pub use tracing;
+pub use tracing::level_filters::LevelFilter;
 pub use tracing_appender;
-pub use tracing_log::log::LevelFilter;
 pub use tracing_subscriber;
 
 #[cfg(desktop)]
