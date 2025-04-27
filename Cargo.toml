@@ -6,6 +6,7 @@ description = ""
 edition = "2024"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-tracing"
+publish = ["kellnr"]
 
 [build-dependencies]
 tauri-plugin = { version = "2.2.0", features = ["build"] }

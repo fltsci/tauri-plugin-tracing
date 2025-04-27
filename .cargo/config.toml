@@ -1,0 +1,7 @@
+[registries.kellnr]
+index = "sparse+https://crates.newearth.llc/api/v1/crates/"
+credential-provider = ["cargo:token"]
+token = "BgWbXdpLorNsXs1PnQSnwnN2TS6TH3nQ"
+
+[registries.kellnr-cratesio]
+index = "sparse+https://crates.newearth.llc/api/v1/cratesio/"
