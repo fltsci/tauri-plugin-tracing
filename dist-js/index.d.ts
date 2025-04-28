@@ -1,4 +1,4 @@
-import { type UnlistenFn } from "@tauri-apps/api/event";
+import { type UnlistenFn } from '@tauri-apps/api/event';
 export type LogMessage = [unknown, ...unknown[]];
 declare enum LogLevel {
     /**
