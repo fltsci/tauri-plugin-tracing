@@ -12,6 +12,8 @@ permissions:
   contents: write
   # required for creating the Version Packages Release
   pull-requests: write
+  # required to create lables on the repository
+  issues: write
 
 jobs:
   version-or-publish:
