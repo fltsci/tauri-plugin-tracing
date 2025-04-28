@@ -35,7 +35,8 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 10.x.x
-          run_install: true
+
+      - run: pnpm i --frozen-lockfile
 
       - name: cargo login
         run: cargo login ${{ secrets.CRATES_IO_PROXY_TOKEN }} --registry kellnr
