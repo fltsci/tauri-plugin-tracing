@@ -1,4 +1,6 @@
 {
   "tag": "canary",
-  "changes": []
+  "changes": [
+    ".changes/set-up-publish-jobs.md"
+  ]
 }
