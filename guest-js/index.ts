@@ -1,7 +1,7 @@
-import { invoke } from "@tauri-apps/api/core";
-import { listen, type Event, type UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from '@tauri-apps/api/core'
+import { listen, type Event, type UnlistenFn } from '@tauri-apps/api/event'
 
-export type LogMessage = [unknown, ...unknown[]];
+export type LogMessage = [unknown, ...unknown[]]
 
 enum LogLevel {
   /**
@@ -33,7 +33,7 @@ enum LogLevel {
    *
    * Designates very serious errors.
    */
-  Error = 5,
+  Error = 5
 }
 
 const stripAnsi = (s?: unknown): string => {
@@ -41,9 +41,9 @@ const stripAnsi = (s?: unknown): string => {
     // TODO: Investigate security/detect-unsafe-regex
     // biome-ignore lint/suspicious/noControlCharactersInRegex: this is in the tauri log plugin
     /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-    ""
-  );
-};
+    ''
+  )
+}
 
 /**
  * Circular replacer for JSON.parse
@@ -51,60 +51,60 @@ const stripAnsi = (s?: unknown): string => {
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#description
  */
 function getCircularReplacer() {
-  const ancestors: unknown[] = [];
+  const ancestors: unknown[] = []
   return function (_key: unknown, value: unknown) {
-    if (typeof value !== "object" || value === null) {
-      return value;
+    if (typeof value !== 'object' || value === null) {
+      return value
     }
     // `this` is the object that value is contained in,
     // i.e., its direct parent.
     // @ts-expect-error -- this type is meant to be unknown, this is a debug container
     while (ancestors.length > 0 && ancestors.at(-1) !== this) {
-      ancestors.pop();
+      ancestors.pop()
     }
     if (ancestors.includes(value)) {
-      return "[Circular]";
+      return '[Circular]'
     }
-    ancestors.push(value);
-    return value;
-  };
+    ancestors.push(value)
+    return value
+  }
 }
 
 const cleanUntypedValue = (value: unknown): string =>
-  stripAnsi(JSON.stringify(value, getCircularReplacer()));
+  stripAnsi(JSON.stringify(value, getCircularReplacer()))
 
 const cleanMessage = (message: LogMessage): LogMessage => {
-  const safeMessage: string[] = [];
-  if (typeof message === "string") {
-    safeMessage.push(stripAnsi(message));
+  const safeMessage: string[] = []
+  if (typeof message === 'string') {
+    safeMessage.push(stripAnsi(message))
   } else if (Array.isArray(message)) {
     for (const msg of message) {
-      safeMessage.push(stripAnsi(msg));
+      safeMessage.push(stripAnsi(msg))
     }
-  } else if (typeof message === "object") {
+  } else if (typeof message === 'object') {
     for (const [key, value] of Object.entries(message)) {
-      safeMessage.push(`${stripAnsi(key)}: ${cleanUntypedValue(value)}`);
+      safeMessage.push(`${stripAnsi(key)}: ${cleanUntypedValue(value)}`)
     }
   } else {
     error(
       `Unhandled type: message is not a string, array, or object, message is ${typeof message}`
-    );
+    )
   }
   // I normally avoid type assertions, but LogMessage is an alias for string[] when managed as above
-  return safeMessage as LogMessage;
-};
+  return safeMessage as LogMessage
+}
 
 async function log(
   level: LogLevel,
   callStack?: string,
   ...msg: LogMessage
 ): Promise<void> {
-  const message = cleanMessage(msg);
-  return await invoke<void>("plugin:tracing|log", {
+  const message = cleanMessage(msg)
+  return await invoke<void>('plugin:tracing|log', {
     level,
     message,
-    callStack,
-  });
+    callStack
+  })
 }
 
 /**
@@ -124,7 +124,7 @@ async function log(
  * ```
  */
 export async function error(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Error, new Error().stack, ...message);
+  await log(LogLevel.Error, new Error().stack, ...message)
 }
 
 /**
@@ -143,7 +143,7 @@ export async function error(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function warn(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Warn, new Error().stack, ...message);
+  await log(LogLevel.Warn, new Error().stack, ...message)
 }
 
 /**
@@ -162,7 +162,7 @@ export async function warn(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function info(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Info, new Error().stack, ...message);
+  await log(LogLevel.Info, new Error().stack, ...message)
 }
 
 /**
@@ -181,7 +181,7 @@ export async function info(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function debug(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Debug, new Error().stack, ...message);
+  await log(LogLevel.Debug, new Error().stack, ...message)
 }
 
 /**
@@ -200,15 +200,15 @@ export async function debug(...message: LogMessage): Promise<void> {
  * ```
  */
 export async function trace(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Trace, new Error().stack, ...message);
+  await log(LogLevel.Trace, new Error().stack, ...message)
 }
 
 interface RecordPayload {
-  level: LogLevel;
-  message: LogMessage;
+  level: LogLevel
+  message: LogMessage
 }
 
-type LoggerFn = (fn: RecordPayload) => void;
+type LoggerFn = (fn: RecordPayload) => void
 
 /**
  * Attaches a listener for the log, and calls the passed function for each log entry.
@@ -217,12 +217,12 @@ type LoggerFn = (fn: RecordPayload) => void;
  * @returns a function to cancel the listener.
  */
 export async function attachLogger(fn: LoggerFn): Promise<UnlistenFn> {
-  return await listen("tracing://log", (event: Event<RecordPayload>) => {
-    const { level } = event.payload;
-    const message = cleanMessage(event.payload.message);
+  return await listen('tracing://log', (event: Event<RecordPayload>) => {
+    const { level } = event.payload
+    const message = cleanMessage(event.payload.message)
 
-    fn({ message, level });
-  });
+    fn({ message, level })
+  })
 }
 
 /**
@@ -234,22 +234,22 @@ export async function attachConsole(): Promise<UnlistenFn> {
   return await attachLogger(({ level, message }: RecordPayload) => {
     switch (level) {
       case LogLevel.Trace:
-        console.log(message);
-        break;
+        console.log(message)
+        break
       case LogLevel.Debug:
-        console.debug(message);
-        break;
+        console.debug(message)
+        break
       case LogLevel.Info:
-        console.info(message);
-        break;
+        console.info(message)
+        break
       case LogLevel.Warn:
-        console.warn(message);
-        break;
+        console.warn(message)
+        break
       case LogLevel.Error:
-        console.error(message);
-        break;
+        console.error(message)
+        break
       default:
-        throw new Error(`unknown log level ${level}`);
+        throw new Error(`unknown log level ${level}`)
     }
-  });
+  })
 }

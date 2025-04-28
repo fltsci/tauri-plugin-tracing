@@ -1,4 +1,4 @@
-use tauri::{plugin::TauriPlugin, Manager, Runtime};
+use tauri::{Manager, Runtime, plugin::TauriPlugin};
 
 pub use models::*;
 

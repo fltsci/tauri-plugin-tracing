@@ -1,0 +1,51 @@
+name: Lint JavaScript
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lint-javascript.yml'
+      - 'guest-js/**'
+      - '.eslintignore'
+      - '.eslintrc.json'
+      - '.prettierignore'
+      - '**/package.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lint-javascript.yml'
+      - 'guest-js/**'
+      - '.eslintignore'
+      - '.eslintrc.json'
+      - '.prettierignore'
+      - '**/package.json'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  biome-lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache pnpm modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.x.x
+      - run: pnpm i --frozen-lockfile
+      - name: biome
+        run: pnpm lint

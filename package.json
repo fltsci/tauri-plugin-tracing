@@ -22,17 +22,39 @@
   ],
   "scripts": {
     "build": "rollup -c",
-    "preinstall": "rollup -c",
     "prepublishOnly": "pnpm build",
-    "pretest": "pnpm build"
+    "pretest": "pnpm build",
+    "lint": "npx biome lint --config-path ./biome.json --write .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@tauri-apps/api": "2.4.1"
+    "@tauri-apps/api": "2.4.1",
+    "covector": "^0.12.4"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^11.1.6",
-    "rollup": "^4.9.6",
+    "@biomejs/biome": "^1.9.4",
+    "@rollup/plugin-node-resolve": "16.0.1",
+    "@rollup/plugin-terser": "0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "prettier": "3.5.3",
+    "rollup": "4.40.0",
+    "tslib": "2.8.1",
     "typescript": "^5.8.3",
-    "tslib": "^2.6.2"
+    "typescript-eslint": "8.31.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild@<0.25.0": ">=0.25.0"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ],
+    "ignoredBuiltDependencies": [
+      "@biomejs/biome"
+    ]
+  },
+  "engines": {
+    "pnpm": "^10.0.0"
   }
 }
