@@ -49,6 +49,9 @@
     },
     "onlyBuiltDependencies": [
       "esbuild"
+    ],
+    "ignoredBuiltDependencies": [
+      "@biomejs/biome"
     ]
   },
   "engines": {

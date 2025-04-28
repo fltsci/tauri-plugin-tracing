@@ -59,11 +59,11 @@
     }
   },
   "packages": {
-    "tauri-plugin-tracing": {
+    "tracing": {
       "path": ".",
       "manager": "rust"
     },
-    "@fltsci/tauri-plugin-tracing": {
+    "tracing-js": {
       "path": ".",
       "manager": "javascript"
     }
