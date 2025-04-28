@@ -38,7 +38,7 @@ const stripAnsi = (s) => {
     return String(s).replace(
     // TODO: Investigate security/detect-unsafe-regex
     // biome-ignore lint/suspicious/noControlCharactersInRegex: this is in the tauri log plugin
-    /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");
+    /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
 };
 /**
  * Circular replacer for JSON.parse
@@ -48,7 +48,7 @@ const stripAnsi = (s) => {
 function getCircularReplacer() {
     const ancestors = [];
     return function (_key, value) {
-        if (typeof value !== "object" || value === null) {
+        if (typeof value !== 'object' || value === null) {
             return value;
         }
         // `this` is the object that value is contained in,
@@ -58,7 +58,7 @@ function getCircularReplacer() {
             ancestors.pop();
         }
         if (ancestors.includes(value)) {
-            return "[Circular]";
+            return '[Circular]';
         }
         ancestors.push(value);
         return value;
@@ -67,7 +67,7 @@ function getCircularReplacer() {
 const cleanUntypedValue = (value) => stripAnsi(JSON.stringify(value, getCircularReplacer()));
 const cleanMessage = (message) => {
     const safeMessage = [];
-    if (typeof message === "string") {
+    if (typeof message === 'string') {
         safeMessage.push(stripAnsi(message));
     }
     else if (Array.isArray(message)) {
@@ -75,7 +75,7 @@ const cleanMessage = (message) => {
             safeMessage.push(stripAnsi(msg));
         }
     }
-    else if (typeof message === "object") {
+    else if (typeof message === 'object') {
         for (const [key, value] of Object.entries(message)) {
             safeMessage.push(`${stripAnsi(key)}: ${cleanUntypedValue(value)}`);
         }
@@ -88,10 +88,10 @@ const cleanMessage = (message) => {
 };
 async function log(level, callStack, ...msg) {
     const message = cleanMessage(msg);
-    return await invoke("plugin:tracing|log", {
+    return await invoke('plugin:tracing|log', {
         level,
         message,
-        callStack,
+        callStack
     });
 }
 /**
@@ -192,7 +192,7 @@ async function trace(...message) {
  * @returns a function to cancel the listener.
  */
 async function attachLogger(fn) {
-    return await listen("tracing://log", (event) => {
+    return await listen('tracing://log', (event) => {
         const { level } = event.payload;
         const message = cleanMessage(event.payload.message);
         fn({ message, level });
