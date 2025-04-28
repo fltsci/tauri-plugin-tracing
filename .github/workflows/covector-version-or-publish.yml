@@ -3,7 +3,7 @@ name: version or publish
 on:
   push:
     branches:
-      - release
+      - main
 
 permissions:
   # required for npm provenance
@@ -76,8 +76,8 @@ jobs:
         uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # 7.0.7
         if: steps.covector.outputs.commandRan == 'version'
         with:
-          title: 'Publish New Versions'
+          title: 'Publish New Versions (${{ github.ref_name }})'
           commit-message: 'publish new versions'
           labels: 'version updates'
-          branch: 'release'
+          branch: 'ci/release-${{ github.ref_name }}'
           body: ${{ steps.covector.outputs.change }}
