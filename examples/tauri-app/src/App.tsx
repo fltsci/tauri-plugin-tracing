@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import { useLogger } from './logger'
 import { useEffect } from 'react'
-import { info } from 'tauri-plugin-tracing'
+import { info } from '@fltsci/tauri-plugin-tracing'
 
 function App() {
   useLogger()

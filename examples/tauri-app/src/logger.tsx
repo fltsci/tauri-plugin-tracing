@@ -7,7 +7,7 @@ import {
   trace,
   warn,
   type LogMessage
-} from 'tauri-plugin-tracing'
+} from '@fltsci/tauri-plugin-tracing'
 import { z } from 'zod'
 
 const javascriptLogLevelEnumSchema = z.enum([

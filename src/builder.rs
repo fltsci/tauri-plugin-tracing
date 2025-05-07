@@ -2,13 +2,29 @@ use tauri::{
     Manager, Runtime,
     plugin::{self, TauriPlugin},
 };
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::fmt::SubscriberBuilder;
+use tracing_subscriber::{
+    filter::{LevelFilter, Targets},
+    fmt::SubscriberBuilder,
+    prelude::*,
+};
 
 use crate::{Error, commands, desktop};
 
-#[derive(Default)]
-pub struct Builder(SubscriberBuilder);
+pub struct Builder {
+    builder: SubscriberBuilder,
+    log_level: LevelFilter,
+    filter: Targets,
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self {
+            builder: SubscriberBuilder::default(),
+            log_level: LevelFilter::WARN,
+            filter: Targets::default(),
+        }
+    }
+}
 
 impl Builder {
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
@@ -29,14 +45,24 @@ impl Builder {
     }
 
     pub fn with_max_level(mut self, max_level: LevelFilter) -> Self {
-        self.0 = self.0.with_max_level(max_level);
+        self.log_level = max_level;
+        self.builder = self.builder.with_max_level(max_level);
+        self
+    }
+
+    pub fn with_target(mut self, target: &str, level: LevelFilter) -> Self {
+        self.filter = self.filter.with_target(target, level);
         self
     }
 }
 
-fn attach_logger(subscriber: Builder) -> Result<(), Error> {
-    tracing::subscriber::set_global_default(subscriber.0.finish())?;
+fn attach_logger(builder: Builder) -> Result<(), Error> {
+    let subscriber = builder
+        .builder
+        .finish()
+        .with(builder.filter.with_default(builder.log_level));
 
+    tracing::subscriber::set_global_default(subscriber)?;
     ::tracing::info!("tracing initialized");
 
     Ok(())

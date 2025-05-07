@@ -28,6 +28,7 @@ time = { version = "0.3.41", default-features = false }
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", default-features = false }
 colored = "3.0.0"
+tracing-core = "0.1.33"
 
 # default to small, optimized release binaries
 [profile.release]
