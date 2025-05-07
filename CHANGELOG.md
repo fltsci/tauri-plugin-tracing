@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.1.2-canary.2]
+
+- [`6977ca8`](https://github.com/fltsci/tauri-plugin-tracing/commit/6977ca88896d01671048c2b384985b8877c32598) ([#12](https://github.com/fltsci/tauri-plugin-tracing/pull/12) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Users can now filter targets using [tracing_subscriber::Target::with_taget(...)](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/targets/struct.Targets.html) syntax.
+
 ## \[0.1.2-canary.1]
 
 - [`6c43912`](https://github.com/fltsci/tauri-plugin-tracing/commit/6c439128ba328244843967d24a1a7531e390c383) ([#9](https://github.com/fltsci/tauri-plugin-tracing/pull/9) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fine tune publishing jobs, use a release branch.

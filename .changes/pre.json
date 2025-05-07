@@ -1,6 +1,7 @@
 {
   "tag": "canary",
   "changes": [
+    ".changes/add-target-filters.md",
     ".changes/fine-tune-ci-workflows.md",
     ".changes/set-up-publish-jobs.md"
   ]
