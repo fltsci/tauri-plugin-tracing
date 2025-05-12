@@ -8,7 +8,6 @@ version = "0.1.2-canary.2"
 authors = ["Flight Science"]
 description = "Use the tracing crate in your Tauri app"
 license = "MIT"
-license-file = "LICENSE.md"
 edition = "2024"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-tracing"
