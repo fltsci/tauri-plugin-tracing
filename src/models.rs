@@ -82,7 +82,7 @@ impl CallStack {
             .map(|line| line.replace("@http://localhost:1420/", ""))
             .collect::<Vec<CallStackLine>>()
             .clone();
-        if filtered.len() > 0 {
+        if !filtered.is_empty() {
             filtered[filtered.len() - 1].clone()
         } else {
             CallStackLine("".to_string())
