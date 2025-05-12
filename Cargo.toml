@@ -4,7 +4,7 @@ resolver = "2"
 
 [package]
 name = "tauri-plugin-tracing"
-version = "0.1.2-canary.2"
+version = "0.1.2-canary.3"
 authors = ["Flight Science"]
 description = "Use the tracing crate in your Tauri app"
 license = "MIT"

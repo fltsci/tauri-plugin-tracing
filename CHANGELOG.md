@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.1.2-canary.3]
+
+- [`e041ec2`](https://github.com/fltsci/tauri-plugin-tracing/commit/e041ec22c232e78df7e3011ac170376588979cd2) ([#14](https://github.com/fltsci/tauri-plugin-tracing/pull/14) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) In the event webview returns an empty callstack, tauri-plugin-tracing will now use an empty string as the callstack.
+
 ## \[0.1.2-canary.2]
 
 - [`6977ca8`](https://github.com/fltsci/tauri-plugin-tracing/commit/6977ca88896d01671048c2b384985b8877c32598) ([#12](https://github.com/fltsci/tauri-plugin-tracing/pull/12) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Users can now filter targets using [tracing_subscriber::Target::with_taget(...)](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/targets/struct.Targets.html) syntax.
