@@ -8,6 +8,10 @@
     "type": "git",
     "url": "git+https://github.com/fltsci/tauri-plugin-tracing.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
   "types": "./dist-js/index.d.ts",
   "main": "./dist-js/index.cjs",
   "module": "./dist-js/index.js",
