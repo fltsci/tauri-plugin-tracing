@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.1.2-canary.4]
+
+- [`549f972`](https://github.com/fltsci/tauri-plugin-tracing/commit/549f972627fc348d8227bcf4c5e1b97e24c639a7) Move NPM package to GitHub packages.
+
 ## \[0.1.2-canary.3]
 
 - [`e041ec2`](https://github.com/fltsci/tauri-plugin-tracing/commit/e041ec22c232e78df7e3011ac170376588979cd2) ([#14](https://github.com/fltsci/tauri-plugin-tracing/pull/14) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) In the event webview returns an empty callstack, tauri-plugin-tracing will now use an empty string as the callstack.
