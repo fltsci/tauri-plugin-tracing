@@ -63,7 +63,9 @@ fn attach_logger(builder: Builder) -> Result<(), Error> {
         .with(builder.filter.with_default(builder.log_level));
 
     tracing::subscriber::set_global_default(subscriber)?;
-    ::tracing::info!("tracing initialized");
+
+    #[cfg(debug_assertions)]
+    ::tracing::debug!("tracing initialized");
 
     Ok(())
 }
