@@ -75,18 +75,15 @@ impl CallStack {
     }
 
     pub fn location(&self) -> CallStackLine {
-        let filtered = self
-            .0
-            .iter()
-            .filter(|line| !line.contains("node_modules") && line.contains("src"))
-            .map(|line| line.replace("@http://localhost:1420/", ""))
-            .collect::<Vec<CallStackLine>>()
-            .clone();
-        if !filtered.is_empty() {
-            filtered[filtered.len() - 1].clone()
-        } else {
-            CallStackLine("".to_string())
-        }
+        CallStackLine(
+            self.0
+                .iter()
+                .filter(|line| !line.contains("node_modules") && line.contains("src"))
+                .map(|line| line.replace("@http://localhost:1420/", "").to_string())
+                .collect::<Vec<String>>()
+                .clone()
+                .join("#"),
+        )
     }
 }
 
