@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,20 +7,21 @@
     "defaultBranch": "main"
   },
   "files": {
-    "ignoreUnknown": false,
-    "include": ["./guest-js/**/*", "./examples/tauri-app/**/*"],
-    "ignore": [
-      ".cargo/**",
-      ".changes/**",
-      ".github/**",
-      "dist-js/**/*",
-      "examples/tauri-app/node_modules/**",
-      "examples/tauri-app/src-tauri/**",
-      "node_modules/**",
-      "permissions/**",
-      "src/**",
-      "target/**"
-    ]
+    "includes": [
+      "./guest-js/**/*",
+      "./examples/tauri-app/**/*",
+      "!.cargo/**",
+      "!.changes/**",
+      "!.github/**",
+      "!dist-js/**/*",
+      "!examples/tauri-app/node_modules/**",
+      "!examples/tauri-app/src-tauri/**",
+      "!node_modules/**",
+      "!permissions/**",
+      "!src/**",
+      "!target/**"
+    ],
+    "ignoreUnknown": false
   },
   "formatter": {
     "enabled": false
@@ -34,7 +35,6 @@
         "useHookAtTopLevel": "error"
       },
       "nursery": {
-        "useComponentExportOnlyModules": "off",
         "useSortedClasses": {
           "level": "off",
           "fix": "safe",
@@ -45,9 +45,10 @@
         }
       },
       "style": {
+        "useComponentExportOnlyModules": "off",
         "useImportType": "info"
       }
     }
   },
-  "organizeImports": { "enabled": false }
+  "assist": { "actions": { "source": { "organizeImports": "off" } } }
 }
