@@ -15,14 +15,12 @@ function App() {
   }, [count])
 
   return (
-    <>
-      <div>
-        <h3>Count: {count}</h3>
-        <button type="button" onClick={() => setCount(count + 1)}>
-          Increment
-        </button>
-      </div>
-    </>
+    <div>
+      <h3>Count: {count}</h3>
+      <button type="button" onClick={() => setCount(count + 1)}>
+        Increment
+      </button>
+    </div>
   )
 }
 
