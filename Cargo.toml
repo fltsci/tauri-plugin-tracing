@@ -15,11 +15,11 @@ repository = "https://github.com/fltsci/tauri-plugin-tracing"
 publish = ["kellnr"]
 
 [build-dependencies]
-tauri-plugin = { version = "2.2.0", features = ["build"] }
+tauri-plugin = { version = "2.3.0", features = ["build"] }
 
 [dependencies]
-serde = { version = "1.0.217", default-features = false }
-tauri = { version = "2.5.1", default-features = false }
+serde = { version = "1.0.219", default-features = false }
+tauri = { version = "2.6.2", default-features = false }
 thiserror = { version = "2.0.12", default-features = false }
 serde_repr = "0.1.20"
 tracing = { version = "0.1.41", default-features = false }
@@ -27,7 +27,7 @@ time = { version = "0.3.41", default-features = false }
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", default-features = false }
 colored = "3.0.0"
-tracing-core = "0.1.33"
+tracing-core = "0.1.34"
 
 # default to small, optimized release binaries
 [profile.release]
