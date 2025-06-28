@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.1.2-canary.5]
+
+- [`ccddfd9`](https://github.com/fltsci/tauri-plugin-tracing/commit/ccddfd9d98c6bf32cb3a6ac77a119efecac1ce92) ([#16](https://github.com/fltsci/tauri-plugin-tracing/pull/16) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add `specta` feature for integration with other Tauri & typescript plugins.
+- [`ccddfd9`](https://github.com/fltsci/tauri-plugin-tracing/commit/ccddfd9d98c6bf32cb3a6ac77a119efecac1ce92) ([#16](https://github.com/fltsci/tauri-plugin-tracing/pull/16) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix various bugs that have popped up in testing.
+
 ## \[0.1.2-canary.4]
 
 - [`549f972`](https://github.com/fltsci/tauri-plugin-tracing/commit/549f972627fc348d8227bcf4c5e1b97e24c639a7) Move NPM package to GitHub packages.
