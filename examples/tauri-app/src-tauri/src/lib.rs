@@ -5,6 +5,7 @@ pub fn run() {
         .plugin(
             tauri_plugin_tracing::Builder::default()
                 .with_max_level(tauri_plugin_tracing::LevelFilter::TRACE)
+                .with_colors()
                 .build(),
         )
         // can also use init() if defaults are ok

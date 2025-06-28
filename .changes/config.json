@@ -20,8 +20,8 @@
           "pipe": true
         },
         {
-          "command": "npm publish --access restricted --registry https://npm.pkg.github.com",
-          "dryRunCommand": "npm publish --access restricted --dry-run --registry https://npm.pkg.github.com",
+          "command": "npm publish --access restricted",
+          "dryRunCommand": "npm publish --access restricted --dry-run",
           "pipe": true
         },
         {
@@ -46,7 +46,7 @@
           "pipe": true
         },
         {
-          "command": "cargo publish --no-verify --registry kellnr",
+          "command": "cargo publish --allow-dirty --no-verify --registry kellnr",
           "dryRunCommand": "cargo publish --dry-run --registry kellnr",
           "pipe": true
         },
