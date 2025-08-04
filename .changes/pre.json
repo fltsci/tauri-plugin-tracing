@@ -7,6 +7,7 @@
     ".changes/fix-empty-call-stack.md",
     ".changes/move-to-github-packages.md",
     ".changes/patch-various-bugs.md",
-    ".changes/set-up-publish-jobs.md"
+    ".changes/set-up-publish-jobs.md",
+    ".changes/use-sync-methods-for-logs.md"
   ]
 }
