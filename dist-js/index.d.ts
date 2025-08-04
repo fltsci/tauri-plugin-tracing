@@ -1,5 +1,8 @@
 import { type UnlistenFn } from '@tauri-apps/api/event';
-export type LogMessage = [unknown, ...unknown[]];
+export type LogMessage = [
+    ...Parameters<typeof console.log>[0],
+    ...Parameters<typeof console.log>
+];
 declare enum LogLevel {
     /**
      * The "trace" level.
@@ -48,7 +51,7 @@ declare enum LogLevel {
  * error(`Error: ${err_info} on port ${port}`);
  * ```
  */
-export declare function error(...message: LogMessage): Promise<void>;
+export declare function error(...message: LogMessage): void;
 /**
  * Logs a message at the warn level.
  *
@@ -64,7 +67,7 @@ export declare function error(...message: LogMessage): Promise<void>;
  * warn(`Warning! {warn_description}!`);
  * ```
  */
-export declare function warn(...message: LogMessage): Promise<void>;
+export declare function warn(...message: LogMessage): void;
 /**
  * Logs a message at the info level.
  *
@@ -80,7 +83,7 @@ export declare function warn(...message: LogMessage): Promise<void>;
  * info(`Connected to port {conn_info.port} at {conn_info.speed} Mb/s`);
  * ```
  */
-export declare function info(...message: LogMessage): Promise<void>;
+export declare function info(...message: LogMessage): void;
 /**
  * Logs a message at the debug level.
  *
@@ -96,7 +99,7 @@ export declare function info(...message: LogMessage): Promise<void>;
  * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-export declare function debug(...message: LogMessage): Promise<void>;
+export declare function debug(...message: LogMessage): void;
 /**
  * Logs a message at the trace level.
  *
@@ -112,7 +115,7 @@ export declare function debug(...message: LogMessage): Promise<void>;
  * trace(`Position is: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-export declare function trace(...message: LogMessage): Promise<void>;
+export declare function trace(...message: LogMessage): void;
 interface RecordPayload {
     level: LogLevel;
     message: LogMessage;

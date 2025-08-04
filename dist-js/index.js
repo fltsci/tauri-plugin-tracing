@@ -83,16 +83,15 @@ const cleanMessage = (message) => {
     else {
         error(`Unhandled type: message is not a string, array, or object, message is ${typeof message}`);
     }
-    // I normally avoid type assertions, but LogMessage is an alias for string[] when managed as above
     return safeMessage;
 };
-async function log(level, callStack, ...msg) {
+function log(level, callStack, ...msg) {
     const message = cleanMessage(msg);
-    return await invoke('plugin:tracing|log', {
+    invoke('plugin:tracing|log', {
         level,
         message,
         callStack
-    });
+    }).catch(console.error);
 }
 /**
  * Logs a message at the error level.
@@ -110,8 +109,8 @@ async function log(level, callStack, ...msg) {
  * error(`Error: ${err_info} on port ${port}`);
  * ```
  */
-async function error(...message) {
-    await log(LogLevel.Error, new Error().stack, ...message);
+function error(...message) {
+    log(LogLevel.Error, new Error().stack, ...message);
 }
 /**
  * Logs a message at the warn level.
@@ -128,8 +127,8 @@ async function error(...message) {
  * warn(`Warning! {warn_description}!`);
  * ```
  */
-async function warn(...message) {
-    await log(LogLevel.Warn, new Error().stack, ...message);
+function warn(...message) {
+    log(LogLevel.Warn, new Error().stack, ...message);
 }
 /**
  * Logs a message at the info level.
@@ -146,8 +145,8 @@ async function warn(...message) {
  * info(`Connected to port {conn_info.port} at {conn_info.speed} Mb/s`);
  * ```
  */
-async function info(...message) {
-    await log(LogLevel.Info, new Error().stack, ...message);
+function info(...message) {
+    log(LogLevel.Info, new Error().stack, ...message);
 }
 /**
  * Logs a message at the debug level.
@@ -164,8 +163,8 @@ async function info(...message) {
  * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-async function debug(...message) {
-    await log(LogLevel.Debug, new Error().stack, ...message);
+function debug(...message) {
+    log(LogLevel.Debug, new Error().stack, ...message);
 }
 /**
  * Logs a message at the trace level.
@@ -182,8 +181,8 @@ async function debug(...message) {
  * trace(`Position is: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-async function trace(...message) {
-    await log(LogLevel.Trace, new Error().stack, ...message);
+function trace(...message) {
+    log(LogLevel.Trace, new Error().stack, ...message);
 }
 /**
  * Attaches a listener for the log, and calls the passed function for each log entry.

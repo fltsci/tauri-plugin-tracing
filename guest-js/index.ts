@@ -1,7 +1,10 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen, type Event, type UnlistenFn } from '@tauri-apps/api/event'
 
-export type LogMessage = [unknown, ...unknown[]]
+export type LogMessage = [
+  ...Parameters<typeof console.log>[0],
+  ...Parameters<typeof console.log>
+]
 
 enum LogLevel {
   /**
@@ -90,21 +93,16 @@ const cleanMessage = (message: LogMessage): LogMessage => {
       `Unhandled type: message is not a string, array, or object, message is ${typeof message}`
     )
   }
-  // I normally avoid type assertions, but LogMessage is an alias for string[] when managed as above
   return safeMessage as LogMessage
 }
 
-async function log(
-  level: LogLevel,
-  callStack?: string,
-  ...msg: LogMessage
-): Promise<void> {
+function log(level: LogLevel, callStack?: string, ...msg: LogMessage) {
   const message = cleanMessage(msg)
-  return await invoke<void>('plugin:tracing|log', {
+  invoke<void>('plugin:tracing|log', {
     level,
     message,
     callStack
-  })
+  }).catch(console.error)
 }
 
 /**
@@ -123,8 +121,8 @@ async function log(
  * error(`Error: ${err_info} on port ${port}`);
  * ```
  */
-export async function error(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Error, new Error().stack, ...message)
+export function error(...message: LogMessage): void {
+  log(LogLevel.Error, new Error().stack, ...message)
 }
 
 /**
@@ -142,8 +140,8 @@ export async function error(...message: LogMessage): Promise<void> {
  * warn(`Warning! {warn_description}!`);
  * ```
  */
-export async function warn(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Warn, new Error().stack, ...message)
+export function warn(...message: LogMessage): void {
+  log(LogLevel.Warn, new Error().stack, ...message)
 }
 
 /**
@@ -161,8 +159,8 @@ export async function warn(...message: LogMessage): Promise<void> {
  * info(`Connected to port {conn_info.port} at {conn_info.speed} Mb/s`);
  * ```
  */
-export async function info(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Info, new Error().stack, ...message)
+export function info(...message: LogMessage): void {
+  log(LogLevel.Info, new Error().stack, ...message)
 }
 
 /**
@@ -180,8 +178,8 @@ export async function info(...message: LogMessage): Promise<void> {
  * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-export async function debug(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Debug, new Error().stack, ...message)
+export function debug(...message: LogMessage): void {
+  log(LogLevel.Debug, new Error().stack, ...message)
 }
 
 /**
@@ -199,8 +197,8 @@ export async function debug(...message: LogMessage): Promise<void> {
  * trace(`Position is: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-export async function trace(...message: LogMessage): Promise<void> {
-  await log(LogLevel.Trace, new Error().stack, ...message)
+export function trace(...message: LogMessage): void {
+  log(LogLevel.Trace, new Error().stack, ...message)
 }
 
 interface RecordPayload {
