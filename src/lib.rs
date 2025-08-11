@@ -21,9 +21,10 @@ pub use tracing_subscriber;
 pub use tracing_subscriber::filter::LevelFilter;
 
 use serde::ser::Serializer;
-use tracing::{Level, event};
+use tracing::{Level, event, instrument};
 
-const WEBVIEW_TARGET: &str = "#webview";
+const WEBVIEW_SPAN: &str = "window";
+const LOGGER_TARGET: &str = "log";
 
 #[cfg(target_os = "ios")]
 mod ios {
@@ -252,17 +253,18 @@ fn log<R: Runtime>(
         LogLevel::Error => path,
     };
     let span = match level {
-        LogLevel::Trace => ::tracing::span!(Level::TRACE, WEBVIEW_TARGET),
-        LogLevel::Debug => ::tracing::span!(Level::DEBUG, WEBVIEW_TARGET),
-        LogLevel::Info => ::tracing::span!(Level::INFO, WEBVIEW_TARGET),
-        LogLevel::Warn => ::tracing::span!(Level::WARN, WEBVIEW_TARGET),
-        LogLevel::Error => ::tracing::span!(Level::ERROR, WEBVIEW_TARGET),
+        LogLevel::Trace => ::tracing::span!(Level::TRACE, WEBVIEW_SPAN),
+        LogLevel::Debug => ::tracing::span!(Level::DEBUG, WEBVIEW_SPAN),
+        LogLevel::Info => ::tracing::span!(Level::INFO, WEBVIEW_SPAN),
+        LogLevel::Warn => ::tracing::span!(Level::WARN, WEBVIEW_SPAN),
+        LogLevel::Error => ::tracing::span!(Level::ERROR, WEBVIEW_SPAN),
     };
     let _enter = span.enter();
 
     macro_rules! emit_event {
         ($level:expr) => {
             tracing::event!(
+                target: LOGGER_TARGET,
                 $level,
                 ?caller,
                 message = %message
@@ -350,11 +352,10 @@ impl Builder {
     }
 }
 
+#[instrument(skip(subscriber))]
 fn attach_logger(subscriber: Layered<Targets, Subscriber>) -> Result<()> {
-    tracing::subscriber::set_global_default(subscriber)?;
+    let _ = tracing::subscriber::set_default(subscriber);
 
-    let span = ::tracing::trace_span!("#attach");
-    let _enter = span.enter();
     ::tracing::info!("initialized");
 
     Ok(())
