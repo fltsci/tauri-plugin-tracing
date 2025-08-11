@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.1.2-canary.7]
+
+- [`b0fd006`](https://github.com/fltsci/tauri-plugin-tracing/commit/b0fd006759d281a83b6cfb6d54d9e83d76e5bff6) ([#20](https://github.com/fltsci/tauri-plugin-tracing/pull/20) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Refine webview path, change initialization from global to default subscriber
+
 ## \[0.1.2-canary.6]
 
 - [`c72e376`](https://github.com/fltsci/tauri-plugin-tracing/commit/c72e37632f064b3f2cc8dea354a690622bf14a4e) ([#18](https://github.com/fltsci/tauri-plugin-tracing/pull/18) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Use sync methods to better emulate the JavaScript console.

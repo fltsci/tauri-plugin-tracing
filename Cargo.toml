@@ -10,7 +10,7 @@ repository = "https://github.com/fltsci/tauri-plugin-tracing"
 
 [package]
 name = "tauri-plugin-tracing"
-version = "0.1.2-canary.6"
+version = "0.1.2-canary.7"
 description = "Use the tracing crate in your Tauri app"
 authors.workspace = true
 license.workspace = true
