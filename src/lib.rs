@@ -21,9 +21,10 @@ pub use tracing_subscriber;
 pub use tracing_subscriber::filter::LevelFilter;
 
 use serde::ser::Serializer;
-use tracing::{Level, event};
+use tracing::{Level, event, instrument};
 
-const WEBVIEW_TARGET: &str = "webview";
+const WEBVIEW_SPAN: &str = "window";
+const LOGGER_TARGET: &str = "log";
 
 #[cfg(target_os = "ios")]
 mod ios {
@@ -92,7 +93,7 @@ impl std::fmt::Display for LogMessage {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct CallStackLine(String);
 
@@ -118,6 +119,12 @@ impl std::fmt::Display for CallStackLine {
     #[cfg(not(feature = "colored"))]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl std::fmt::Debug for CallStackLine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
     }
 }
 
@@ -157,6 +164,13 @@ impl CallStack {
                 .clone()
                 .join("#"),
         )
+    }
+
+    pub fn file_name(&self) -> CallStackLine {
+        match self.location().split("/").last() {
+            Some(file_name) => CallStackLine(file_name.to_string()),
+            None => CallStackLine("unknown".to_string()),
+        }
     }
 }
 
@@ -229,13 +243,30 @@ fn log<R: Runtime>(
     call_stack: Option<&str>,
 ) {
     let stack = CallStack::from(call_stack);
-    let location = stack.location();
+    let path = stack.location();
+    let file_name = stack.file_name();
+    let caller = match level {
+        LogLevel::Trace => file_name,
+        LogLevel::Debug => file_name,
+        LogLevel::Info => file_name,
+        LogLevel::Warn => file_name,
+        LogLevel::Error => path,
+    };
+    let span = match level {
+        LogLevel::Trace => ::tracing::span!(Level::TRACE, WEBVIEW_SPAN),
+        LogLevel::Debug => ::tracing::span!(Level::DEBUG, WEBVIEW_SPAN),
+        LogLevel::Info => ::tracing::span!(Level::INFO, WEBVIEW_SPAN),
+        LogLevel::Warn => ::tracing::span!(Level::WARN, WEBVIEW_SPAN),
+        LogLevel::Error => ::tracing::span!(Level::ERROR, WEBVIEW_SPAN),
+    };
+    let _enter = span.enter();
+
     macro_rules! emit_event {
         ($level:expr) => {
             tracing::event!(
-                target: WEBVIEW_TARGET,
+                target: LOGGER_TARGET,
                 $level,
-                location = %location,
+                ?caller,
                 message = %message
             )
         };
@@ -247,7 +278,7 @@ fn log<R: Runtime>(
         LogLevel::Warn => emit_event!(Level::WARN),
         LogLevel::Error => {
             for line in &stack.0 {
-                event!(target: WEBVIEW_TARGET, Level::TRACE, %line);
+                event!(Level::ERROR, %line);
             }
             emit_event!(Level::ERROR)
         }
@@ -302,7 +333,7 @@ impl Builder {
     }
 
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
-        plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![log])
+        plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![log,])
     }
 
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
@@ -321,11 +352,11 @@ impl Builder {
     }
 }
 
+#[instrument(skip(subscriber))]
 fn attach_logger(subscriber: Layered<Targets, Subscriber>) -> Result<()> {
-    tracing::subscriber::set_global_default(subscriber)?;
+    let _ = tracing::subscriber::set_default(subscriber);
 
-    #[cfg(debug_assertions)]
-    ::tracing::debug!("tracing initialized");
+    ::tracing::info!("initialized");
 
     Ok(())
 }
