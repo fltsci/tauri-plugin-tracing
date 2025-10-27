@@ -1,3 +1,7 @@
+mod callstack;
+#[cfg(feature = "timing")]
+mod timing;
+
 use std::path::PathBuf;
 use tauri::plugin::{self, TauriPlugin};
 use tauri::{AppHandle, Runtime};
@@ -11,8 +15,17 @@ use tracing_subscriber::{
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[cfg(feature = "colored")]
-use colored::*;
+pub use callstack::*;
+#[cfg(feature = "timing")]
+pub use timing::*;
+
+pub trait LoggerExt<R: Runtime> {
+    #[cfg(feature = "timing")]
+    fn time(&self, label: compact_str::CompactString);
+
+    #[cfg(feature = "timing")]
+    fn time_end(&self, label: compact_str::CompactString, call_stack: Option<&str>);
+}
 
 pub use tracing;
 pub use tracing_appender;
@@ -90,87 +103,6 @@ impl std::ops::DerefMut for LogMessage {
 impl std::fmt::Display for LogMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.join(", "))
-    }
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-#[cfg_attr(feature = "specta", derive(specta::Type))]
-pub struct CallStackLine(String);
-
-impl std::ops::Deref for CallStackLine {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for CallStackLine {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl std::fmt::Display for CallStackLine {
-    #[cfg(feature = "colored")]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.dimmed())
-    }
-    #[cfg(not(feature = "colored"))]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::fmt::Debug for CallStackLine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-impl CallStackLine {
-    pub fn replace(&self, from: &str, to: &str) -> Self {
-        CallStackLine(self.0.replace(from, to))
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[cfg_attr(feature = "specta", derive(specta::Type))]
-pub struct CallStack(pub Vec<CallStackLine>);
-
-impl From<Option<&str>> for CallStack {
-    fn from(value: Option<&str>) -> Self {
-        let lines = value
-            .unwrap_or("")
-            .split("\n")
-            .map(|line| CallStackLine(line.to_string()))
-            .collect();
-        Self(lines)
-    }
-}
-
-impl CallStack {
-    pub fn new(value: Option<&str>) -> Self {
-        CallStack::from(value)
-    }
-
-    pub fn location(&self) -> CallStackLine {
-        CallStackLine(
-            self.0
-                .iter()
-                .filter(|line| !line.contains("node_modules") && line.contains("src"))
-                .map(|line| line.replace("@http://localhost:1420/", "").to_string())
-                .collect::<Vec<String>>()
-                .clone()
-                .join("#"),
-        )
-    }
-
-    pub fn file_name(&self) -> CallStackLine {
-        match self.location().split("/").last() {
-            Some(file_name) => CallStackLine(file_name.to_string()),
-            None => CallStackLine("unknown".to_string()),
-        }
     }
 }
 
@@ -285,6 +217,20 @@ fn log<R: Runtime>(
     }
 }
 
+#[cfg(feature = "timing")]
+#[tauri::command]
+fn time<R: Runtime>(app: AppHandle<R>, label: String) {
+    use compact_str::ToCompactString;
+    app.time(label.to_compact_string());
+}
+
+#[cfg(feature = "timing")]
+#[tauri::command]
+fn time_end<R: Runtime>(app: AppHandle<R>, label: String, call_stack: Option<&str>) {
+    use compact_str::ToCompactString;
+    app.time_end(label.to_compact_string(), call_stack);
+}
+
 pub struct Builder {
     builder: SubscriberBuilder,
     log_level: LevelFilter,
@@ -323,6 +269,13 @@ impl Builder {
         self
     }
 
+    #[cfg(feature = "timing")]
+    pub fn setup_timings<R: Runtime>(&self, app: &AppHandle<R>) {
+        use tauri::Manager;
+        let timings = Timings::default();
+        app.manage(timings);
+    }
+
     fn acquire_logger<R: Runtime>(
         _app_handle: &AppHandle<R>,
         builder: SubscriberBuilder,
@@ -332,6 +285,13 @@ impl Builder {
         Ok(builder.finish().with(filter.with_default(log_level)))
     }
 
+    #[cfg(feature = "timing")]
+    fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
+        plugin::Builder::new("tracing")
+            .invoke_handler(tauri::generate_handler![log, time, time_end])
+    }
+
+    #[cfg(not(feature = "timing"))]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![log,])
     }
@@ -339,6 +299,9 @@ impl Builder {
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
         Self::plugin_builder()
             .setup(move |app, _api| {
+                #[cfg(feature = "timing")]
+                self.setup_timings(app);
+
                 #[cfg(desktop)]
                 attach_logger(Self::acquire_logger(
                     app,
@@ -346,6 +309,7 @@ impl Builder {
                     self.filter,
                     self.log_level,
                 )?)?;
+
                 Ok(())
             })
             .build()
@@ -357,7 +321,6 @@ fn attach_logger(subscriber: Layered<Targets, Subscriber>) -> Result<()> {
     let _ = tracing::subscriber::set_default(subscriber);
 
     ::tracing::info!("initialized");
-
     Ok(())
 }
 

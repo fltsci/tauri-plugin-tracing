@@ -1,0 +1,11 @@
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-time"
+description = "Enables the time command."
+commands.allow = ["time"]
+
+[[permission]]
+identifier = "deny-time"
+description = "Denies the time command."
+commands.deny = ["time"]

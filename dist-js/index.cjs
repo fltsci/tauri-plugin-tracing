@@ -87,12 +87,24 @@ const cleanMessage = (message) => {
     }
     return safeMessage;
 };
-function log(level, callStack, ...msg) {
+function log(level, ...msg) {
     const message = cleanMessage(msg);
     core.invoke('plugin:tracing|log', {
         level,
         message,
-        callStack
+        callStack: new Error().stack
+    }).catch(console.error);
+}
+function time(label) {
+    core.invoke('plugin:tracing|time', {
+        label,
+        callStack: new Error().stack
+    }).catch(console.error);
+}
+function timeEnd(label) {
+    core.invoke('plugin:tracing|time_end', {
+        label,
+        callStack: new Error().stack
     }).catch(console.error);
 }
 /**
@@ -112,7 +124,7 @@ function log(level, callStack, ...msg) {
  * ```
  */
 function error(...message) {
-    log(LogLevel.Error, new Error().stack, ...message);
+    log(LogLevel.Error, ...message);
 }
 /**
  * Logs a message at the warn level.
@@ -130,7 +142,7 @@ function error(...message) {
  * ```
  */
 function warn(...message) {
-    log(LogLevel.Warn, new Error().stack, ...message);
+    log(LogLevel.Warn, ...message);
 }
 /**
  * Logs a message at the info level.
@@ -148,7 +160,7 @@ function warn(...message) {
  * ```
  */
 function info(...message) {
-    log(LogLevel.Info, new Error().stack, ...message);
+    log(LogLevel.Info, ...message);
 }
 /**
  * Logs a message at the debug level.
@@ -166,7 +178,7 @@ function info(...message) {
  * ```
  */
 function debug(...message) {
-    log(LogLevel.Debug, new Error().stack, ...message);
+    log(LogLevel.Debug, ...message);
 }
 /**
  * Logs a message at the trace level.
@@ -184,7 +196,7 @@ function debug(...message) {
  * ```
  */
 function trace(...message) {
-    log(LogLevel.Trace, new Error().stack, ...message);
+    log(LogLevel.Trace, ...message);
 }
 /**
  * Attaches a listener for the log, and calls the passed function for each log entry.
@@ -233,5 +245,7 @@ exports.attachLogger = attachLogger;
 exports.debug = debug;
 exports.error = error;
 exports.info = info;
+exports.time = time;
+exports.timeEnd = timeEnd;
 exports.trace = trace;
 exports.warn = warn;

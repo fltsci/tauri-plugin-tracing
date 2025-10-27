@@ -35,6 +35,8 @@ declare enum LogLevel {
      */
     Error = 5
 }
+export declare function time(label: string): void;
+export declare function timeEnd(label: string): void;
 /**
  * Logs a message at the error level.
  *
