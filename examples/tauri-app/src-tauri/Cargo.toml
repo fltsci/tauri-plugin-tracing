@@ -14,14 +14,14 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.5.1", default-features = false, features = [
-    "codegen",
+  "codegen",
 ] }
 
 [dependencies]
 tauri.workspace = true
 tracing.workspace = true
 tauri-plugin-tracing = { path = "../../../", features = [
-    "colored",
-    "specta",
-    "timing",
+  "colored",
+  "specta",
+  "timing",
 ] }
