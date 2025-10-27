@@ -1,8 +1,9 @@
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+#[tracing::instrument]
 pub fn run() {
     tauri::Builder::default()
-        // can be configured with similar options as fmt subscriber
         .plugin(
+            // can be configured with similar options as fmt subscriber
             tauri_plugin_tracing::Builder::default()
                 .with_max_level(tauri_plugin_tracing::LevelFilter::TRACE)
                 .with_colors()
@@ -19,6 +20,7 @@ pub fn run() {
             ::tauri_plugin_tracing::tracing::info!("App initialized");
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(move |_app, _event| {})
 }

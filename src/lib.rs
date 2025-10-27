@@ -198,8 +198,8 @@ fn log<R: Runtime>(
             tracing::event!(
                 target: LOGGER_TARGET,
                 $level,
-                ?caller,
-                message = %message
+                "::" = %caller,
+                message = %message,
             )
         };
     }
