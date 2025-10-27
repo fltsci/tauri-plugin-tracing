@@ -1,4 +1,5 @@
 mod callstack;
+#[cfg(feature = "timing")]
 mod timing;
 
 use std::path::PathBuf;
@@ -16,7 +17,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 pub use callstack::*;
 #[cfg(feature = "timing")]
-pub use timing::timing::*;
+pub use timing::*;
 
 pub trait LoggerExt<R: Runtime> {
     #[cfg(feature = "timing")]
