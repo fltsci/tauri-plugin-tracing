@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.0]
+
+- [`f865b4a`](https://github.com/fltsci/tauri-plugin-tracing/commit/f865b4aeb0fe23a4b81490059edf7c9f18670ddc) ([#22](https://github.com/fltsci/tauri-plugin-tracing/pull/22) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add timing.
+
 ## \[0.1.2-canary.7]
 
 - [`b0fd006`](https://github.com/fltsci/tauri-plugin-tracing/commit/b0fd006759d281a83b6cfb6d54d9e83d76e5bff6) ([#20](https://github.com/fltsci/tauri-plugin-tracing/pull/20) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Refine webview path, change initialization from global to default subscriber

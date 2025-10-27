@@ -3,6 +3,7 @@
   "changes": [
     ".changes/add-specta.md",
     ".changes/add-target-filters.md",
+    ".changes/add-timing.md",
     ".changes/fine-tune-ci-workflows.md",
     ".changes/fix-empty-call-stack.md",
     ".changes/move-to-github-packages.md",
