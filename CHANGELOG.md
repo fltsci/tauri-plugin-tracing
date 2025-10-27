@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.1]
+
+- [`87086a7`](https://github.com/fltsci/tauri-plugin-tracing/commit/87086a7e7995737d6399a34c6c75ab5938361680) ([#24](https://github.com/fltsci/tauri-plugin-tracing/pull/24) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update examples and Cargo dependencies.
+
 ## \[0.2.0-canary.0]
 
 - [`f865b4a`](https://github.com/fltsci/tauri-plugin-tracing/commit/f865b4aeb0fe23a4b81490059edf7c9f18670ddc) ([#22](https://github.com/fltsci/tauri-plugin-tracing/pull/22) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add timing.
