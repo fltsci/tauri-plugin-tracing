@@ -42,6 +42,7 @@ impl<R: Runtime, T: Manager<R>> crate::LoggerExt<R> for T {
 
     #[instrument(skip_all, name = "time", fields(id = %label))]
     fn time_end(&self, label: CompactString, call_stack: Option<&str>) {
+        let caller = CallStack::from(call_stack).file_name();
         match self.app_handle().state::<Timings>().lock() {
             Ok(mut timings) => {
                 if let Some(started) = timings.remove(&label.to_compact_string()) {
@@ -49,14 +50,24 @@ impl<R: Runtime, T: Manager<R>> crate::LoggerExt<R> for T {
                         target: TIME_END_SPAN,
                         Level::TRACE,
                         message = %format!("{:.3}ms",started.elapsed().as_micros() as f64 / 1000.0),
-                         "::" = %CallStack::from(call_stack).file_name()
+                         "::" = %caller
                     )
                 } else {
-                    event!(Level::ERROR, "Timing label not found: {}", label);
+                    event!(
+                        target: TIME_END_SPAN,
+                        Level::WARN,
+                        message = %format!("Timing label not found: {}", label),
+                        "::" = %caller
+                    );
                 }
             }
             Err(e) => {
-                event!(Level::ERROR, "Failed to lock timings: {}", e);
+                event!(
+                    target: TIME_END_SPAN,
+                    Level::ERROR,
+                    message = %format!("Failed to lock timings: {}", e),
+                    "::" = %caller
+                );
             }
         }
     }

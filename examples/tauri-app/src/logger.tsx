@@ -78,22 +78,22 @@ const unlistenAll = (res: (UnlistenFn | undefined)[]) => {
 
 const useLogger = () => {
   useEffect(() => {
-    const unlistenFns: ReturnType<typeof forwardConsole>[] = []
-    console.time = time
-    console.timeEnd = timeEnd
-    for (const [key, value] of Object.entries(forwarded)) {
-      unlistenFns.push(forwardConsole(key as JavascriptLogLevel, value))
-    }
-    return () => {
-      console.time = original.time
-      console.timeEnd = original.timeEnd
-      for (const [key, value] of Object.entries(original)) {
-        forwardConsole(key as JavascriptLogLevel, value)
-          .then(unlisten)
-          .catch(console.error)
-      }
-      Promise.all(unlistenFns).then(unlistenAll).catch(console.error)
-    }
+    // const unlistenFns: ReturnType<typeof forwardConsole>[] = []
+    // console.time = time
+    // console.timeEnd = timeEnd
+    // for (const [key, value] of Object.entries(forwarded)) {
+    //   unlistenFns.push(forwardConsole(key as JavascriptLogLevel, value))
+    // }
+    // return () => {
+    //   console.time = original.time
+    //   console.timeEnd = original.timeEnd
+    //   for (const [key, value] of Object.entries(original)) {
+    //     forwardConsole(key as JavascriptLogLevel, value)
+    //       .then(unlisten)
+    //       .catch(console.error)
+    //   }
+    //   Promise.all(unlistenFns).then(unlistenAll).catch(console.error)
+    // }
   }, [])
 }
 
