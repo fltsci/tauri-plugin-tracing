@@ -1,0 +1,11 @@
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-time-end"
+description = "Enables the time-end command."
+commands.allow = ["time_end"]
+
+[[permission]]
+identifier = "deny-time-end"
+description = "Denies the time-end command."
+commands.deny = ["time_end"]

@@ -96,12 +96,26 @@ const cleanMessage = (message: LogMessage): LogMessage => {
   return safeMessage as LogMessage
 }
 
-function log(level: LogLevel, callStack?: string, ...msg: LogMessage) {
+function log(level: LogLevel, ...msg: LogMessage) {
   const message = cleanMessage(msg)
   invoke<void>('plugin:tracing|log', {
     level,
     message,
-    callStack
+    callStack: new Error().stack
+  }).catch(console.error)
+}
+
+export function time(label: string): void {
+  invoke<void>('plugin:tracing|time', {
+    label,
+    callStack: new Error().stack
+  }).catch(console.error)
+}
+
+export function timeEnd(label: string): void {
+  invoke<void>('plugin:tracing|time_end', {
+    label,
+    callStack: new Error().stack
   }).catch(console.error)
 }
 
@@ -122,7 +136,7 @@ function log(level: LogLevel, callStack?: string, ...msg: LogMessage) {
  * ```
  */
 export function error(...message: LogMessage): void {
-  log(LogLevel.Error, new Error().stack, ...message)
+  log(LogLevel.Error, ...message)
 }
 
 /**
@@ -141,7 +155,7 @@ export function error(...message: LogMessage): void {
  * ```
  */
 export function warn(...message: LogMessage): void {
-  log(LogLevel.Warn, new Error().stack, ...message)
+  log(LogLevel.Warn, ...message)
 }
 
 /**
@@ -160,7 +174,7 @@ export function warn(...message: LogMessage): void {
  * ```
  */
 export function info(...message: LogMessage): void {
-  log(LogLevel.Info, new Error().stack, ...message)
+  log(LogLevel.Info, ...message)
 }
 
 /**
@@ -179,7 +193,7 @@ export function info(...message: LogMessage): void {
  * ```
  */
 export function debug(...message: LogMessage): void {
-  log(LogLevel.Debug, new Error().stack, ...message)
+  log(LogLevel.Debug, ...message)
 }
 
 /**
@@ -198,7 +212,7 @@ export function debug(...message: LogMessage): void {
  * ```
  */
 export function trace(...message: LogMessage): void {
-  log(LogLevel.Trace, new Error().stack, ...message)
+  log(LogLevel.Trace, ...message)
 }
 
 interface RecordPayload {
