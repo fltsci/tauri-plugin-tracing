@@ -14,11 +14,6 @@ links = "tauri-plugin-tracing"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 publish = ["kellnr"]
 
-[[example]]
-name = "tauri_app_lib"
-path = "examples/tauri-app/src-tauri"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
 [workspace.metadata.platforms.support]
 windows = { level = "unknown", notes = "" }
 linux = { level = "unknown", notes = "" }
