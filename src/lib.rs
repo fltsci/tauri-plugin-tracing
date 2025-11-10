@@ -19,12 +19,13 @@ pub use callstack::*;
 #[cfg(feature = "timing")]
 pub use timing::*;
 
+#[async_trait::async_trait]
 pub trait LoggerExt<R: Runtime> {
     #[cfg(feature = "timing")]
-    fn time(&self, label: compact_str::CompactString);
+    async fn time(&self, label: compact_str::CompactString);
 
     #[cfg(feature = "timing")]
-    fn time_end(&self, label: compact_str::CompactString, call_stack: Option<&str>);
+    async fn time_end(&self, label: compact_str::CompactString, call_stack: Option<String>);
 }
 
 pub use tracing;
@@ -219,16 +220,16 @@ fn log<R: Runtime>(
 
 #[cfg(feature = "timing")]
 #[tauri::command]
-fn time<R: Runtime>(app: AppHandle<R>, label: String) {
+async fn time<R: Runtime>(app: AppHandle<R>, label: String) {
     use compact_str::ToCompactString;
-    app.time(label.to_compact_string());
+    app.time(label.to_compact_string()).await;
 }
 
 #[cfg(feature = "timing")]
 #[tauri::command]
-fn time_end<R: Runtime>(app: AppHandle<R>, label: String, call_stack: Option<&str>) {
+async fn time_end<R: Runtime>(app: AppHandle<R>, label: String, call_stack: Option<String>) {
     use compact_str::ToCompactString;
-    app.time_end(label.to_compact_string(), call_stack);
+    app.time_end(label.to_compact_string(), call_stack).await;
 }
 
 pub struct Builder {

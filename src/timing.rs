@@ -1,21 +1,26 @@
 use crate::callstack::*;
-use ahash::AHashMap;
-use compact_str::{CompactString, ToCompactString};
-use std::sync::Mutex;
+use ahash::{HashMap, HashMapExt};
+use compact_str::CompactString;
 use std::time::Instant;
 use tauri::Manager;
 use tauri::Runtime;
+use tokio::sync::Mutex;
 use tracing::{Level, event, instrument};
 
 const TIME_END_SPAN: &str = "end";
 
-pub type TimingMap = AHashMap<CompactString, Instant>;
+pub type TimingMap = HashMap<CompactString, Instant>;
 
-#[derive(Default)]
 pub struct Timings(Mutex<TimingMap>);
 
+impl Default for Timings {
+    fn default() -> Self {
+        Self(Mutex::new(HashMap::new()))
+    }
+}
+
 impl std::ops::Deref for Timings {
-    type Target = std::sync::Mutex<TimingMap>;
+    type Target = Mutex<TimingMap>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -28,47 +33,39 @@ impl std::ops::DerefMut for Timings {
     }
 }
 
-impl<R: Runtime, T: Manager<R>> crate::LoggerExt<R> for T {
-    fn time(&self, label: CompactString) {
-        match self.app_handle().state::<Timings>().lock() {
-            Ok(mut timings) => {
-                timings.insert(label, std::time::Instant::now());
-            }
-            Err(e) => {
-                event!(Level::ERROR, "Failed to lock timings: {}", e);
-            }
-        }
+#[async_trait::async_trait]
+impl<R: Runtime, T: Manager<R> + std::marker::Sync> crate::LoggerExt<R> for T {
+    async fn time(&self, label: CompactString) {
+        self.app_handle()
+            .state::<Timings>()
+            .lock()
+            .await
+            .insert(label, std::time::Instant::now());
     }
 
     #[instrument(skip_all, name = "time", fields(id = %label))]
-    fn time_end(&self, label: CompactString, call_stack: Option<&str>) {
+    async fn time_end(&self, label: CompactString, call_stack: Option<String>) {
         let caller = CallStack::from(call_stack).file_name();
-        match self.app_handle().state::<Timings>().lock() {
-            Ok(mut timings) => {
-                if let Some(started) = timings.remove(&label.to_compact_string()) {
-                    event!(
-                        target: TIME_END_SPAN,
-                        Level::TRACE,
-                        message = %format!("{:.3}ms",started.elapsed().as_micros() as f64 / 1000.0),
-                         "::" = %caller
-                    )
-                } else {
-                    event!(
-                        target: TIME_END_SPAN,
-                        Level::WARN,
-                        message = %format!("Timing label not found: {}", label),
-                        "::" = %caller
-                    );
-                }
-            }
-            Err(e) => {
-                event!(
-                    target: TIME_END_SPAN,
-                    Level::ERROR,
-                    message = %format!("Failed to lock timings: {}", e),
-                    "::" = %caller
-                );
-            }
+        if let Some(started) = self
+            .app_handle()
+            .state::<Timings>()
+            .lock()
+            .await
+            .remove(&label)
+        {
+            event!(
+                target: TIME_END_SPAN,
+                Level::TRACE,
+                message = %format!("{:.3}ms",started.elapsed().as_micros() as f64 / 1000.0),
+                 "::" = %caller
+            )
+        } else {
+            event!(
+                target: TIME_END_SPAN,
+                Level::WARN,
+                message = %format!("Timing label not found: {}", label),
+                "::" = %caller
+            );
         }
     }
 }
