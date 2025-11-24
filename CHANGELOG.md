@@ -1,5 +1,11 @@
 # Changelog
 
+## \[0.2.0-canary.2]
+
+- [`5fc7cea`](https://github.com/fltsci/tauri-plugin-tracing/commit/5fc7cea14476f78643cd25dad1be57707193fedc) ([#26](https://github.com/fltsci/tauri-plugin-tracing/pull/26) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) -   Update Tauri to version 2.9.3
+  - Update npm dependencies to latest
+  - Update example to latest implementation
+
 ## \[0.2.0-canary.1]
 
 - [`87086a7`](https://github.com/fltsci/tauri-plugin-tracing/commit/87086a7e7995737d6399a34c6c75ab5938361680) ([#24](https://github.com/fltsci/tauri-plugin-tracing/pull/24) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update examples and Cargo dependencies.
