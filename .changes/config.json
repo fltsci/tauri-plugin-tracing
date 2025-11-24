@@ -20,8 +20,8 @@
           "pipe": true
         },
         {
-          "command": "npm publish --access restricted --tag ${ pkg.pkgFile.versionPrerelease }",
-          "dryRunCommand": "npm publish --access restricted --tag ${ pkg.pkgFile.versionPrerelease } --dry-run",
+          "command": "npm publish --access restricted --tag ${ pkg.versionPrerelease }",
+          "dryRunCommand": "npm publish --access restricted --tag ${ pkg.versionPrerelease } --dry-run",
           "pipe": true
         },
         {
