@@ -83,6 +83,9 @@ jobs:
       - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
         run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
 
+      - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
+        run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
+
       - name: Sync Cargo.lock
         if: steps.covector.outputs.commandRan == 'version'
         run: cargo tree --depth 0
