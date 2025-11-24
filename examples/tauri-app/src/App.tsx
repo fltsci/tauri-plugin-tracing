@@ -1,12 +1,9 @@
 import { useState } from 'react'
 import './App.css'
-import { useLogger } from './logger'
 import { useEffect } from 'react'
 import { info } from '@fltsci/tauri-plugin-tracing'
 
 function App() {
-  useLogger()
-
   const [count, setCount] = useState(0)
 
   useEffect(() => {
