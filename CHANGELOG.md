@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.3]
+
+- [`12a7417`](https://github.com/fltsci/tauri-plugin-tracing/commit/12a7417adbffdff96be896bf182862642f1bf725) ([#30](https://github.com/fltsci/tauri-plugin-tracing/pull/30) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add [release channel check](https://docs.npmjs.com/adding-dist-tags-to-packages) to publish job CI.
+
 ## \[0.2.0-canary.2]
 
 - [`5fc7cea`](https://github.com/fltsci/tauri-plugin-tracing/commit/5fc7cea14476f78643cd25dad1be57707193fedc) ([#26](https://github.com/fltsci/tauri-plugin-tracing/pull/26) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) -   Update Tauri to version 2.9.3
