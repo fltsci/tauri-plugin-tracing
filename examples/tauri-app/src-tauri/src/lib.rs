@@ -1,16 +1,43 @@
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
+use tracing_subscriber::filter::Targets;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+
+use tauri_plugin_tracing::LevelFilter;
+
 #[tracing::instrument]
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(
-            // can be configured with similar options as fmt subscriber
-            tauri_plugin_tracing::Builder::default()
-                .with_max_level(tauri_plugin_tracing::LevelFilter::TRACE)
-                .with_colors()
-                .build(),
-        )
-        // can also use init() if defaults are ok
-        // .plugin(tauri_plugin_tracing::init())
+    let mut builder = tauri::Builder::default();
+
+    // Filter out unwanted targets
+    let targets = Targets::new()
+        .with_default(LevelFilter::TRACE)
+        .with_target("tao::platform_impl::platform::view", LevelFilter::WARN)
+        .with_target(
+            "tao::platform_impl::platform::window_delegate",
+            LevelFilter::WARN,
+        );
+
+    // Configure the app-wide tracing subscriber
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(targets)
+        .try_init()
+        .unwrap();
+
+    // Configure the tracing plugin
+    let tracing_plugin = tauri_plugin_tracing::Builder::default()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .build();
+
+    // Add the tracing plugin to the builder
+    builder = builder.plugin(tracing_plugin);
+
+    // note: can also use init() if defaults are ok
+    // builder = builder.plugin(tauri_plugin_tracing::init());
+
+    builder
         .setup(|app| {
             #[cfg(debug_assertions)]
             use tauri::Manager;
