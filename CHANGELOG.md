@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.3]
+
+- [`96c37b6`](https://github.com/fltsci/tauri-plugin-tracing/commit/96c37b62b92486c72749607e005e6ed7bb37ac73) ([#36](https://github.com/fltsci/tauri-plugin-tracing/pull/36) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix a lockup possibly caused by the timings' feature's use of a sync mutex.
+
 ## \[0.2.0-canary.2]
 
 - [`16ee339`](https://github.com/fltsci/tauri-plugin-tracing/commit/16ee339387ede491544544dd7feaf56d019e6b8c) ([#34](https://github.com/fltsci/tauri-plugin-tracing/pull/34) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add [release channel check](https://docs.npmjs.com/adding-dist-tags-to-packages) to publish job CI.
