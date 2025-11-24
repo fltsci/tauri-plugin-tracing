@@ -15,21 +15,12 @@
           "dryRunCommand": "pnpm build"
         },
         {
-          "command": "echo '<details>\n<summary><em><h4>PNPM Publish</h4></em></summary>\n\n```'",
-          "dryRunCommand": true,
-          "pipe": true
-        },
-        {
-          "command": "npm publish --access restricted --tag ${ pkg.versionPrerelease }",
-          "dryRunCommand": "npm publish --access restricted --tag ${ pkg.versionPrerelease } --dry-run",
-          "pipe": true
-        },
-        {
-          "command": "echo '```\n\n</details>\n'",
-          "dryRunCommand": true,
+          "command": "npm publish --access restricted --tag '${ pkgFile.pkg.version.split('-')[1].split('.')[0] ?? 'latest' }'",
+          "dryRunCommand": "npm publish --access restricted --tag '${ pkgFile.pkg.version.split('-')[1].split('.')[0] ?? 'latest' }' --dry-run",
           "pipe": true
         }
-      ]
+      ],
+      "postpublish": false
     },
     "rust": {
       "version": true,
@@ -40,21 +31,13 @@
         }
       },
       "publish": [
-        {
-          "command": "echo '<details>\n<summary><em><h4>Cargo Publish</h4></em></summary>\n\n```'",
-          "dryRunCommand": true,
-          "pipe": true
-        },
+      
         {
           "command": "cargo publish --allow-dirty --no-verify --registry kellnr",
           "dryRunCommand": "cargo publish --dry-run --registry kellnr",
           "pipe": true
-        },
-        {
-          "command": "echo '```\n\n</details>\n'",
-          "dryRunCommand": true,
-          "pipe": true
         }
+      
       ]
     }
   },
