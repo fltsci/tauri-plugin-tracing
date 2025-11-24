@@ -10,6 +10,7 @@
     ".changes/move-to-github-packages.md",
     ".changes/patch-various-bugs.md",
     ".changes/set-up-publish-jobs.md",
+    ".changes/skip-version.md",
     ".changes/update-tauri-dependencies.md",
     ".changes/update-timing-behavior.md",
     ".changes/use-async-mutex.md",

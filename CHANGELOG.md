@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.4]
+
+- [`a8d659b`](https://github.com/fltsci/tauri-plugin-tracing/commit/a8d659bf6a132994cc00a1cd17fb8ec1f5af0d60) ([#38](https://github.com/fltsci/tauri-plugin-tracing/pull/38) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Skipping a version previously published to satisfy NPM publishing rules.
+
 ## \[0.2.0-canary.3]
 
 - [`96c37b6`](https://github.com/fltsci/tauri-plugin-tracing/commit/96c37b62b92486c72749607e005e6ed7bb37ac73) ([#36](https://github.com/fltsci/tauri-plugin-tracing/pull/36) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix a lockup possibly caused by the timings' feature's use of a sync mutex.
