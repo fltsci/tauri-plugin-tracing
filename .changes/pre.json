@@ -12,6 +12,7 @@
     ".changes/set-up-publish-jobs.md",
     ".changes/update-tauri-dependencies.md",
     ".changes/update-timing-behavior.md",
+    ".changes/use-async-mutex.md",
     ".changes/use-default-subscriber.md",
     ".changes/use-sync-methods-for-logs.md"
   ]
