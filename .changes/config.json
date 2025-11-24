@@ -20,8 +20,8 @@
           "pipe": true
         },
         {
-          "command": "npm publish --access restricted",
-          "dryRunCommand": "npm publish --access restricted --dry-run",
+          "command": "npm publish --access restricted --tag '${ pkgFile.pkg.version.split('-')[1].split('.')[0] ?? 'latest' }'",
+          "dryRunCommand": "npm publish --access restricted --tag '${ pkgFile.pkg.version.split('-')[1].split('.')[0] ?? 'latest' }' --dry-run",
           "pipe": true
         },
         {

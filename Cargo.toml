@@ -7,7 +7,7 @@ authors = ["Flight Science"]
 name = "tauri-plugin-tracing"
 license = "MIT"
 edition = "2024"
-version = "0.2.0-canary.1"
+version = "0.2.0-canary.2"
 repository = "https://github.com/fltsci/tauri-plugin-tracing"
 description = "Use the tracing crate in your Tauri app"
 links = "tauri-plugin-tracing"
@@ -26,7 +26,7 @@ tauri-plugin = { version = "2.5.1", features = ["build"] }
 
 [workspace.dependencies]
 serde = { version = "1.0.228", default-features = false }
-tauri = { version = "2.9.2" }
+tauri = { version = "2.9.3" }
 thiserror = { version = "2.0.17", default-features = false }
 serde_repr = "0.1.20"
 tokio = { version = "1.48.0", features = ["full"] }

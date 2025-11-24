@@ -29,14 +29,15 @@ jobs:
         with:
           fetch-depth: 0 # required for use of git history
 
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           registry-url: 'https://registry.npmjs.org'
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.x.x
+          cache: 'pnpm'
 
       - run: pnpm i --frozen-lockfile
 
@@ -66,6 +67,13 @@ jobs:
           command: 'version-or-publish'
           createRelease: true
           recognizeContributors: true
+          identifier: ${{ steps.release-channel.outputs.result }}
+
+      - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
+        run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
+
+      - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
+        run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
 
       - name: Sync Cargo.lock
         if: steps.covector.outputs.commandRan == 'version'
@@ -75,9 +83,12 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # 7.0.7
         if: steps.covector.outputs.commandRan == 'version'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          title: 'Publish New Versions (${{ github.ref_name }})'
+          title: 'Publish New Versions'
+          sign-commits: true
           commit-message: 'publish new versions'
           labels: 'version updates'
-          branch: 'ci/release-${{ github.ref_name }}'
+          branch: 'release'
           body: ${{ steps.covector.outputs.change }}
