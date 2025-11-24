@@ -5,21 +5,21 @@ description = "A Tauri App"
 authors = ["you"]
 license = ""
 repository = ""
-edition = "2021"
-rust-version = "1.77.2"
+edition = "2024"
 
 [lib]
 name = "tauri_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.5.1", default-features = false, features = [
+tauri-build = { version = "2.5.2", default-features = false, features = [
   "codegen",
 ] }
 
 [dependencies]
 tauri.workspace = true
 tracing.workspace = true
+tracing-subscriber.workspace = true
 tauri-plugin-tracing = { path = "../../../", features = [
   "colored",
   "specta",
