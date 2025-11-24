@@ -59,6 +59,17 @@ impl From<Option<&str>> for CallStack {
     }
 }
 
+impl From<Option<String>> for CallStack {
+    fn from(value: Option<String>) -> Self {
+        let lines = value
+            .unwrap_or("".to_string())
+            .split("\n")
+            .map(|line| CallStackLine(line.to_string()))
+            .collect();
+        Self(lines)
+    }
+}
+
 impl CallStack {
     pub fn new(value: Option<&str>) -> Self {
         CallStack::from(value)
