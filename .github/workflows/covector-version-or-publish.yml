@@ -41,6 +41,16 @@ jobs:
 
       - run: pnpm i --frozen-lockfile
 
+      - name: get release channel
+        id: release-channel
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: 'string'
+          script: |
+            const script = require('./.scripts/ci/get-release-channel.cjs');
+            return await script({github, context});
+
       - name: cargo login
         run: cargo login ${{ secrets.CRATES_IO_PROXY_TOKEN }} --registry kellnr
 
@@ -67,6 +77,7 @@ jobs:
           command: 'version-or-publish'
           createRelease: true
           recognizeContributors: true
+          identifier: ${{ steps.release-channel.outputs.result }}
 
       - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
         run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"

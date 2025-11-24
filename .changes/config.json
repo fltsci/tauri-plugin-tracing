@@ -20,8 +20,8 @@
           "pipe": true
         },
         {
-          "command": "npm publish --access restricted --tag $(echo node .scripts/ci/get-release-channel.cjs)",
-          "dryRunCommand": "npm publish --access restricted --dry-run --tag $(echo node .scripts/ci/get-release-channel.cjs)",
+          "command": "npm publish --access restricted --tag ${ pkg.pkgFile.versionPrerelease }",
+          "dryRunCommand": "npm publish --access restricted --tag ${ pkg.pkgFile.versionPrerelease } --dry-run",
           "pipe": true
         },
         {
