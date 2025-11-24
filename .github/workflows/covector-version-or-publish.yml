@@ -35,9 +35,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          registry-url: 'https://registry.npmjs.org'          
-          cache: "pnpm"
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
 
       - run: pnpm i --frozen-lockfile
 
@@ -68,7 +68,7 @@ jobs:
           createRelease: true
           recognizeContributors: true
 
-      - name: "ran covector ${{ steps.covector.outputs.commandRan }}"
+      - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
         run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
 
       - name: Sync Cargo.lock
