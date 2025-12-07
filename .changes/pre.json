@@ -15,6 +15,7 @@
     ".changes/update-timing-behavior.md",
     ".changes/use-async-mutex.md",
     ".changes/use-default-subscriber.md",
+    ".changes/use-npm-oidc.md",
     ".changes/use-sync-methods-for-logs.md"
   ]
 }
