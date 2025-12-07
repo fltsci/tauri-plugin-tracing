@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.5]
+
+- [`5549ce1`](https://github.com/fltsci/tauri-plugin-tracing/commit/5549ce1e99a8f80532c20afb3d619ae59096fb50) ([#40](https://github.com/fltsci/tauri-plugin-tracing/pull/40) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Use OIDC publishing for NPM
+
 ## \[0.2.0-canary.4]
 
 - [`a8d659b`](https://github.com/fltsci/tauri-plugin-tracing/commit/a8d659bf6a132994cc00a1cd17fb8ec1f5af0d60) ([#38](https://github.com/fltsci/tauri-plugin-tracing/pull/38) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Skipping a version previously published to satisfy NPM publishing rules.
