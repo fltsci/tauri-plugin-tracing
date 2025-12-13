@@ -22,19 +22,19 @@ android = { level = "unknown", notes = "" }
 ios = { level = "unknown", notes = "" }
 
 [build-dependencies]
-tauri-plugin = { version = "2.5.1", features = ["build"] }
+tauri-plugin = { version = "2.5.2", features = ["build"] }
 
 [workspace.dependencies]
 serde = { version = "1.0.228", default-features = false }
-tauri = { version = "2.9.3" }
+tauri = { version = "2.9.5" }
 thiserror = { version = "2.0.17", default-features = false }
 serde_repr = "0.1.20"
 tokio = { version = "1.48.0", features = ["full"] }
-tracing = { version = "0.1.41" }
+tracing = { version = "0.1.43" }
 time = { version = "0.3.44", default-features = false }
-tracing-appender = "0.2.3"
-tracing-core = "0.1.34"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+tracing-appender = "0.2.4"
+tracing-core = "0.1.35"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 colored = { version = "3.0.0" }
 specta = { version = "=2.0.0-rc.22", features = ["derive"] }
 ahash = { version = "0.8.12", features = ["serde"] }

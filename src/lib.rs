@@ -35,10 +35,7 @@ pub use tracing_subscriber;
 pub use tracing_subscriber::filter::LevelFilter;
 
 use serde::ser::Serializer;
-use tracing::{Level, event, instrument};
-
-const WEBVIEW_SPAN: &str = "window";
-const LOGGER_TARGET: &str = "log";
+use tracing::{Level, instrument};
 
 #[cfg(target_os = "ios")]
 mod ios {
@@ -169,38 +166,28 @@ impl From<tracing::Level> for LogLevel {
 }
 
 #[tauri::command]
+#[tracing::instrument(skip_all, fields(w = %CallStackLine::from(webview_window.label())))]
 fn log<R: Runtime>(
-    _app: AppHandle<R>,
+    webview_window: tauri::WebviewWindow<R>,
     level: LogLevel,
     message: LogMessage,
     call_stack: Option<&str>,
 ) {
     let stack = CallStack::from(call_stack);
-    let path = stack.location();
-    let file_name = stack.file_name();
-    let caller = match level {
-        LogLevel::Trace => file_name,
-        LogLevel::Debug => file_name,
-        LogLevel::Info => file_name,
-        LogLevel::Warn => file_name,
-        LogLevel::Error => path,
+    let loc = match level {
+        LogLevel::Trace => stack.location(),
+        LogLevel::Debug => stack.path(),
+        LogLevel::Info => stack.file_name(),
+        LogLevel::Warn => stack.path(),
+        LogLevel::Error => stack.location(),
     };
-    let span = match level {
-        LogLevel::Trace => ::tracing::span!(Level::TRACE, WEBVIEW_SPAN),
-        LogLevel::Debug => ::tracing::span!(Level::DEBUG, WEBVIEW_SPAN),
-        LogLevel::Info => ::tracing::span!(Level::INFO, WEBVIEW_SPAN),
-        LogLevel::Warn => ::tracing::span!(Level::WARN, WEBVIEW_SPAN),
-        LogLevel::Error => ::tracing::span!(Level::ERROR, WEBVIEW_SPAN),
-    };
-    let _enter = span.enter();
-
     macro_rules! emit_event {
         ($level:expr) => {
             tracing::event!(
-                target: LOGGER_TARGET,
+                target: "",
                 $level,
-                "::" = %caller,
-                message = %message,
+                %message,
+                "" = %loc,
             )
         };
     }
@@ -209,12 +196,7 @@ fn log<R: Runtime>(
         LogLevel::Debug => emit_event!(Level::DEBUG),
         LogLevel::Info => emit_event!(Level::INFO),
         LogLevel::Warn => emit_event!(Level::WARN),
-        LogLevel::Error => {
-            for line in &stack.0 {
-                event!(Level::ERROR, %line);
-            }
-            emit_event!(Level::ERROR)
-        }
+        LogLevel::Error => emit_event!(Level::ERROR),
     }
 }
 

@@ -15,6 +15,24 @@ impl std::ops::Deref for CallStackLine {
     }
 }
 
+impl From<&str> for CallStackLine {
+    fn from(value: &str) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl From<Option<&str>> for CallStackLine {
+    fn from(value: Option<&str>) -> Self {
+        Self(value.unwrap_or("unknown").to_string())
+    }
+}
+
+impl Default for CallStackLine {
+    fn default() -> Self {
+        Self("unknown".to_string())
+    }
+}
+
 impl std::ops::DerefMut for CallStackLine {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
@@ -41,6 +59,15 @@ impl std::fmt::Debug for CallStackLine {
 impl CallStackLine {
     pub fn replace(&self, from: &str, to: &str) -> Self {
         CallStackLine(self.0.replace(from, to))
+    }
+    fn strip_localhost(&self) -> String {
+        let mut result = self.to_string();
+        if let Some(start) = result.find("localhost:")
+            && let Some(slash_pos) = result[start..].find('/')
+        {
+            result.replace_range(0..start + slash_pos + 1, "");
+        }
+        result
     }
 }
 
@@ -79,12 +106,18 @@ impl CallStack {
         CallStackLine(
             self.0
                 .iter()
-                .filter(|line| !line.contains("node_modules") && line.contains("src"))
-                .map(|line| line.replace("@http://localhost:1420/", "").to_string())
+                .filter_map(fmap_location)
                 .collect::<Vec<String>>()
                 .clone()
                 .join("#"),
         )
+    }
+
+    pub fn path(&self) -> CallStackLine {
+        match self.location().split("#").last() {
+            Some(file_name) => CallStackLine(file_name.to_string()),
+            None => CallStackLine("unknown".to_string()),
+        }
     }
 
     pub fn file_name(&self) -> CallStackLine {
@@ -93,4 +126,16 @@ impl CallStack {
             None => CallStackLine("unknown".to_string()),
         }
     }
+}
+
+const FILTERED_LINES: [&str; 2] = ["node_modules", "forEach@[native code]"];
+
+fn fmap_location(line: &CallStackLine) -> Option<String> {
+    if FILTERED_LINES
+        .iter()
+        .any(|filtered| line.contains(filtered))
+    {
+        return None;
+    }
+    Some(line.strip_localhost())
 }
