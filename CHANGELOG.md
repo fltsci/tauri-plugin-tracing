@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.6]
+
+- [`8a183d9`](https://github.com/fltsci/tauri-plugin-tracing/commit/8a183d94733787ec0876fdb77f820db2b1d3f1f9) ([#42](https://github.com/fltsci/tauri-plugin-tracing/pull/42) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Include window name in tracing logs.
+
 ## \[0.2.0-canary.5]
 
 - [`5549ce1`](https://github.com/fltsci/tauri-plugin-tracing/commit/5549ce1e99a8f80532c20afb3d619ae59096fb50) ([#40](https://github.com/fltsci/tauri-plugin-tracing/pull/40) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Use OIDC publishing for NPM
