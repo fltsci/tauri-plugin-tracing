@@ -11,8 +11,8 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] Colored terminal output (`colored` feature)
 - [x] iOS native logging (swift_rs)
 - [x] Strip ANSI codes from messages
-- [ ] File logging (LogDir target)
-- [ ] Custom folder logging
+- [x] File logging (LogDir target)
+- [x] Custom folder logging
 - [ ] Log rotation (KeepAll, KeepOne, KeepSome)
 - [ ] Max file size configuration
 - [ ] Timezone configuration (UTC/local)

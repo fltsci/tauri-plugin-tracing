@@ -29,6 +29,22 @@
 //! }
 //! ```
 //!
+//! ## File Logging
+//!
+//! Enable file logging to write logs to the platform-standard log directory:
+//!
+//! ```rust,ignore
+//! Builder::new()
+//!     .with_max_level(LevelFilter::DEBUG)
+//!     .with_file_logging()  // Logs to platform log directory
+//!     .build()
+//! ```
+//!
+//! Log files rotate daily and are written to:
+//! - **macOS**: `~/Library/Logs/{bundle_identifier}/app.YYYY-MM-DD.log`
+//! - **Linux**: `~/.local/share/{bundle_identifier}/logs/app.YYYY-MM-DD.log`
+//! - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs/app.YYYY-MM-DD.log`
+//!
 //! ## JavaScript API
 //!
 //! ```javascript
@@ -45,12 +61,13 @@ mod timing;
 
 use std::path::PathBuf;
 use tauri::plugin::{self, TauriPlugin};
-use tauri::{AppHandle, Runtime};
-use tracing_subscriber::layer::Layered;
+use tauri::{AppHandle, Manager, Runtime};
+use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
+    Registry,
     filter::Targets,
-    fmt::{Subscriber, SubscriberBuilder},
-    prelude::*,
+    fmt::{self, SubscriberBuilder},
+    layer::SubscriberExt,
 };
 
 use serde::{Deserialize, Serialize};
@@ -160,6 +177,36 @@ impl Serialize for Error {
         serializer.serialize_str(self.to_string().as_ref())
     }
 }
+
+/// Specifies where log files should be written.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, LogTarget};
+/// use std::path::PathBuf;
+///
+/// // Use platform default (e.g., ~/Library/Logs/{bundle_id} on macOS)
+/// Builder::new().with_log_dir(LogTarget::LogDir);
+///
+/// // Use a custom directory
+/// Builder::new().with_log_dir(LogTarget::Folder(PathBuf::from("/var/log/myapp")));
+/// ```
+#[derive(Debug, Clone)]
+pub enum LogTarget {
+    /// Use the platform-standard log directory.
+    /// - **macOS**: `~/Library/Logs/{bundle_identifier}`
+    /// - **Linux**: `~/.local/share/{bundle_identifier}/logs`
+    /// - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs`
+    LogDir,
+
+    /// Use a custom directory path.
+    Folder(PathBuf),
+}
+
+/// Stores the WorkerGuard to ensure logs are flushed on shutdown.
+/// This must be kept alive for the lifetime of the application.
+struct LogGuard(#[allow(dead_code)] Option<WorkerGuard>);
 
 /// A log message consisting of one or more string parts.
 ///
@@ -340,6 +387,9 @@ pub struct Builder {
     builder: SubscriberBuilder,
     log_level: LevelFilter,
     filter: Targets,
+    file_log: Option<LogTarget>,
+    #[cfg(feature = "colored")]
+    use_colors: bool,
 }
 
 impl Default for Builder {
@@ -348,6 +398,9 @@ impl Default for Builder {
             builder: SubscriberBuilder::default(),
             log_level: LevelFilter::WARN,
             filter: Targets::default(),
+            file_log: None,
+            #[cfg(feature = "colored")]
+            use_colors: false,
         }
     }
 }
@@ -400,27 +453,53 @@ impl Builder {
     #[cfg(feature = "colored")]
     pub fn with_colors(mut self) -> Self {
         self.builder = self.builder.with_ansi(true);
+        self.use_colors = true;
         self
     }
 
-    /// Initializes the timing state for the application.
+    /// Enables file logging to the platform-standard log directory.
     ///
-    /// This is called automatically during plugin setup when the `timing`
-    /// feature is enabled.
-    #[cfg(feature = "timing")]
-    pub fn setup_timings<R: Runtime>(&self, app: &AppHandle<R>) {
-        use tauri::Manager;
-        let timings = Timings::default();
-        app.manage(timings);
+    /// Log files rotate daily with the naming pattern `app.YYYY-MM-DD.log`.
+    ///
+    /// Platform log directories:
+    /// - **macOS**: `~/Library/Logs/{bundle_identifier}`
+    /// - **Linux**: `~/.local/share/{bundle_identifier}/logs`
+    /// - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs`
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// Builder::new()
+    ///     .with_max_level(LevelFilter::DEBUG)
+    ///     .with_file_logging()
+    ///     .build()
+    /// ```
+    pub fn with_file_logging(mut self) -> Self {
+        self.file_log = Some(LogTarget::LogDir);
+        self
     }
 
-    fn acquire_logger<R: Runtime>(
-        _app_handle: &AppHandle<R>,
-        builder: SubscriberBuilder,
-        filter: Targets,
-        log_level: LevelFilter,
-    ) -> Result<Layered<Targets, Subscriber>> {
-        Ok(builder.finish().with(filter.with_default(log_level)))
+    /// Enables file logging to a specific directory or the platform default.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` - The log target directory configuration
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use std::path::PathBuf;
+    /// use tauri_plugin_tracing::{Builder, LogTarget};
+    ///
+    /// // Platform default
+    /// Builder::new().with_log_dir(LogTarget::LogDir);
+    ///
+    /// // Custom directory
+    /// Builder::new().with_log_dir(LogTarget::Folder(PathBuf::from("/var/log/myapp")));
+    /// ```
+    pub fn with_log_dir(mut self, target: LogTarget) -> Self {
+        self.file_log = Some(target);
+        self
     }
 
     #[cfg(feature = "timing")]
@@ -448,18 +527,34 @@ impl Builder {
     ///     .expect("error while running tauri application");
     /// ```
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
+        let log_level = self.log_level;
+        let filter = self.filter;
+        let file_log = self.file_log;
+
+        #[cfg(feature = "colored")]
+        let use_colors = self.use_colors;
+
         Self::plugin_builder()
             .setup(move |app, _api| {
                 #[cfg(feature = "timing")]
-                self.setup_timings(app);
+                setup_timings(app);
 
                 #[cfg(desktop)]
-                attach_logger(Self::acquire_logger(
-                    app,
-                    self.builder,
-                    self.filter,
-                    self.log_level,
-                )?)?;
+                {
+                    let guard = acquire_logger(
+                        app,
+                        log_level,
+                        filter,
+                        file_log,
+                        #[cfg(feature = "colored")]
+                        use_colors,
+                    )?;
+
+                    // Store the guard in Tauri's state management to ensure logs flush on shutdown
+                    if guard.is_some() {
+                        app.manage(LogGuard(guard));
+                    }
+                }
 
                 Ok(())
             })
@@ -467,12 +562,76 @@ impl Builder {
     }
 }
 
-#[instrument(skip(subscriber))]
-fn attach_logger(subscriber: Layered<Targets, Subscriber>) -> Result<()> {
-    let _ = tracing::subscriber::set_default(subscriber);
+/// Initializes the timing state for the application.
+#[cfg(feature = "timing")]
+fn setup_timings<R: Runtime>(app: &AppHandle<R>) {
+    let timings = Timings::default();
+    app.manage(timings);
+}
 
-    ::tracing::info!("initialized");
-    Ok(())
+/// Resolves the log directory path based on the target configuration.
+fn resolve_log_dir<R: Runtime>(app_handle: &AppHandle<R>, target: &LogTarget) -> Result<PathBuf> {
+    match target {
+        LogTarget::LogDir => {
+            let log_dir = app_handle.path().app_log_dir()?;
+            std::fs::create_dir_all(&log_dir)?;
+            Ok(log_dir)
+        }
+        LogTarget::Folder(path) => {
+            std::fs::create_dir_all(path)?;
+            Ok(path.clone())
+        }
+    }
+}
+
+/// Sets up the tracing subscriber with console output and optional file logging.
+#[instrument(skip_all)]
+fn acquire_logger<R: Runtime>(
+    app_handle: &AppHandle<R>,
+    log_level: LevelFilter,
+    filter: Targets,
+    file_log: Option<LogTarget>,
+    #[cfg(feature = "colored")] use_colors: bool,
+) -> Result<Option<WorkerGuard>> {
+    let filter_with_default = filter.with_default(log_level);
+
+    // Create console layer
+    #[cfg(feature = "colored")]
+    let console_layer = fmt::layer().with_ansi(use_colors).with_target(true);
+
+    #[cfg(not(feature = "colored"))]
+    let console_layer = fmt::layer().with_ansi(false).with_target(true);
+
+    // Set up subscriber with or without file logging
+    let guard = if let Some(target) = file_log {
+        let log_dir = resolve_log_dir(app_handle, &target)?;
+        let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
+        let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+
+        // File layer without ANSI colors
+        let file_layer = fmt::layer()
+            .with_ansi(false)
+            .with_target(true)
+            .with_writer(non_blocking);
+
+        let subscriber = Registry::default()
+            .with(console_layer)
+            .with(file_layer)
+            .with(filter_with_default);
+
+        tracing::subscriber::set_global_default(subscriber)?;
+        Some(guard)
+    } else {
+        let subscriber = Registry::default()
+            .with(console_layer)
+            .with(filter_with_default);
+
+        tracing::subscriber::set_global_default(subscriber)?;
+        None
+    };
+
+    tracing::info!("tracing initialized");
+    Ok(guard)
 }
 
 fn _rename_file_to_dated() -> Result<()> {
