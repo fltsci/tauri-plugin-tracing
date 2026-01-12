@@ -1,6 +1,7 @@
 {
   "tag": "canary",
   "changes": [
+    ".changes/add-documentation.md",
     ".changes/add-release-channel-checking-to-ci.md",
     ".changes/add-specta.md",
     ".changes/add-target-filters.md",
