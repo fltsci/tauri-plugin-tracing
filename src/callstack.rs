@@ -12,6 +12,24 @@ use colored::*;
 ///
 /// This type wraps a string and provides methods for extracting location
 /// information while filtering out noise like `node_modules` paths.
+///
+/// # Examples
+///
+/// ```
+/// use tauri_plugin_tracing::CallStackLine;
+///
+/// // Create from a string
+/// let line = CallStackLine::from("at foo (src/app.ts:10:5)");
+/// assert!(line.contains("foo"));
+///
+/// // Default is "unknown"
+/// let default_line = CallStackLine::default();
+/// assert_eq!(default_line.as_str(), "unknown");
+///
+/// // Create from None defaults to "unknown"
+/// let none_line = CallStackLine::from(None);
+/// assert_eq!(none_line.as_str(), "unknown");
+/// ```
 #[derive(Deserialize, Serialize, Clone)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct CallStackLine(String);
@@ -67,6 +85,16 @@ impl std::fmt::Debug for CallStackLine {
 
 impl CallStackLine {
     /// Replaces occurrences of a substring with another string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tauri_plugin_tracing::CallStackLine;
+    ///
+    /// let line = CallStackLine::from("at foo (src/old.ts:10:5)");
+    /// let replaced = line.replace("old", "new");
+    /// assert!(replaced.contains("new.ts"));
+    /// ```
     pub fn replace(&self, from: &str, to: &str) -> Self {
         CallStackLine(self.0.replace(from, to))
     }
@@ -87,6 +115,30 @@ impl CallStackLine {
 ///
 /// This type parses a newline-separated call stack string and provides methods
 /// to extract different levels of location detail for log messages.
+///
+/// # Examples
+///
+/// ```
+/// use tauri_plugin_tracing::CallStack;
+///
+/// // Parse a simple call stack
+/// let stack = CallStack::new(Some("Error\n    at foo (src/app.ts:10:5)\n    at bar (src/lib.ts:20:3)"));
+///
+/// // Get just the filename (last component after '/')
+/// assert_eq!(stack.file_name().as_str(), "lib.ts:20:3)");
+///
+/// // Get the full path of the last frame
+/// assert_eq!(stack.path().as_str(), "    at bar (src/lib.ts:20:3)");
+/// ```
+///
+/// ```
+/// use tauri_plugin_tracing::CallStack;
+///
+/// // node_modules paths are filtered out
+/// let stack = CallStack::new(Some("Error\n    at node_modules/lib/index.js:1:1\n    at src/app.ts:10:5"));
+/// let location = stack.location();
+/// assert!(!location.contains("node_modules"));
+/// ```
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct CallStack(pub Vec<CallStackLine>);

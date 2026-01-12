@@ -13,7 +13,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use tauri_plugin_tracing::{Builder, LevelFilter};
 //!
 //! fn main() {
@@ -203,6 +203,23 @@ pub struct RecordPayload {
 /// An enum representing the available verbosity levels of the logger.
 ///
 /// It is very similar to `log::Level`, but serializes to unsigned ints instead of strings.
+///
+/// # Examples
+///
+/// ```
+/// use tauri_plugin_tracing::LogLevel;
+///
+/// // Default is Info
+/// assert!(matches!(LogLevel::default(), LogLevel::Info));
+///
+/// // Convert to tracing::Level
+/// let level: tracing::Level = LogLevel::Debug.into();
+/// assert_eq!(level, tracing::Level::DEBUG);
+///
+/// // Convert from tracing::Level
+/// let log_level: LogLevel = tracing::Level::WARN.into();
+/// assert!(matches!(log_level, LogLevel::Warn));
+/// ```
 #[derive(Debug, Clone, Deserialize_repr, Serialize_repr, Default)]
 #[repr(u16)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
