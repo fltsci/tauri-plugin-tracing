@@ -267,3 +267,39 @@ fn builder_full_rotation_configuration() {
         .with_rotation_strategy(RotationStrategy::KeepSome(7))
         .build::<tauri::Wry>();
 }
+
+#[test]
+fn record_payload_serialization() {
+    use tauri_plugin_tracing::RecordPayload;
+
+    let payload = RecordPayload {
+        message: "test message".to_string(),
+        level: LogLevel::Info,
+    };
+
+    // Verify payload can be serialized (required for emit)
+    let json = serde_json::to_string(&payload).unwrap();
+    assert!(json.contains("test message"));
+    assert!(json.contains("3")); // Info = 3
+}
+
+#[test]
+fn record_payload_levels() {
+    use tauri_plugin_tracing::RecordPayload;
+
+    // Test all log levels serialize correctly
+    for (level, expected_num) in [
+        (LogLevel::Trace, "1"),
+        (LogLevel::Debug, "2"),
+        (LogLevel::Info, "3"),
+        (LogLevel::Warn, "4"),
+        (LogLevel::Error, "5"),
+    ] {
+        let payload = RecordPayload {
+            message: "test".to_string(),
+            level,
+        };
+        let json = serde_json::to_string(&payload).unwrap();
+        assert!(json.contains(expected_num), "Expected {} in {}", expected_num, json);
+    }
+}

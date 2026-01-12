@@ -22,7 +22,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] `trace()`, `debug()`, `info()`, `warn()`, `error()`
 - [x] `attachLogger()` - attach custom log listener
 - [x] `attachConsole()` - route logs to browser console
-- [ ] Webview target (emit events from Rust to JS) - *required for attachLogger/attachConsole to work*
+- [x] Webview target (emit events from Rust to JS via WebviewLayer)
 
 ### Builder Configuration
 
@@ -45,3 +45,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] Call stack parsing - JS file location in logs
 - [x] Window name in logs - webview label included
 - [x] `specta` integration - TypeScript type generation (`specta` feature)
+
+### Known Issues / Future Work
+
+- [ ] Find alternative to `set_global_default()` - currently prevents apps from setting up their own tracing subscriber before plugin init
