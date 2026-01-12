@@ -61,10 +61,10 @@ mod timing;
 
 use std::path::PathBuf;
 use tauri::plugin::{self, TauriPlugin};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
-    Registry,
+    Layer, Registry,
     filter::Targets,
     fmt::{self, SubscriberBuilder},
     layer::SubscriberExt,
@@ -297,6 +297,62 @@ pub struct RecordPayload {
     pub message: String,
     /// The severity level of the log.
     pub level: LogLevel,
+}
+
+/// A tracing layer that emits log events to the webview via Tauri events.
+///
+/// This layer intercepts all log events and forwards them to the frontend
+/// via the `tracing://log` event, allowing JavaScript code to receive
+/// logs using `attachLogger()` or `attachConsole()`.
+struct WebviewLayer<R: Runtime> {
+    app_handle: AppHandle<R>,
+}
+
+impl<R: Runtime> WebviewLayer<R> {
+    fn new(app_handle: AppHandle<R>) -> Self {
+        Self { app_handle }
+    }
+}
+
+impl<S, R: Runtime> Layer<S> for WebviewLayer<R>
+where
+    S: tracing::Subscriber,
+{
+    fn on_event(
+        &self,
+        event: &tracing::Event<'_>,
+        _ctx: tracing_subscriber::layer::Context<'_, S>,
+    ) {
+        let mut visitor = MessageVisitor::default();
+        event.record(&mut visitor);
+
+        let level: LogLevel = (*event.metadata().level()).into();
+        let payload = RecordPayload {
+            message: visitor.message,
+            level,
+        };
+
+        let _ = self.app_handle.emit("tracing://log", payload);
+    }
+}
+
+#[derive(Default)]
+struct MessageVisitor {
+    message: String,
+}
+
+impl tracing::field::Visit for MessageVisitor {
+    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
+        if field.name() == "message" || self.message.is_empty() {
+            self.message = format!("{:?}", value);
+        }
+    }
+
+    fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
+        if field.name() == "message" || self.message.is_empty() {
+            self.message = value.to_string();
+        }
+    }
 }
 
 /// An enum representing the available verbosity levels of the logger.
@@ -740,6 +796,7 @@ fn acquire_logger<R: Runtime>(
     #[cfg(feature = "colored")] use_colors: bool,
 ) -> Result<Option<WorkerGuard>> {
     let filter_with_default = filter.with_default(log_level);
+    let webview_layer = WebviewLayer::new(app_handle.clone());
 
     // Set up subscriber with or without file logging
     let guard = if let Some(target) = file_log {
@@ -770,6 +827,7 @@ fn acquire_logger<R: Runtime>(
         let subscriber = Registry::default()
             .with(console_layer)
             .with(file_layer)
+            .with(webview_layer)
             .with(filter_with_default);
 
         tracing::subscriber::set_global_default(subscriber)?;
@@ -784,6 +842,7 @@ fn acquire_logger<R: Runtime>(
 
         let subscriber = Registry::default()
             .with(console_layer)
+            .with(webview_layer)
             .with(filter_with_default);
 
         tracing::subscriber::set_global_default(subscriber)?;
