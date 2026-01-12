@@ -3,7 +3,8 @@
 //! These tests exercise functionality that requires a Tauri context,
 //! which cannot be tested via doctests in the main crate.
 
-use tauri_plugin_tracing::{Builder, CallStack, CallStackLine, LevelFilter, LogLevel};
+use std::path::PathBuf;
+use tauri_plugin_tracing::{Builder, CallStack, CallStackLine, LevelFilter, LogLevel, LogTarget};
 
 #[test]
 fn builder_default() {
@@ -168,4 +169,43 @@ fn call_stack_strips_localhost() {
     let location = stack.location();
     assert!(!location.contains("localhost"));
     assert!(location.contains("src/app.ts"));
+}
+
+#[test]
+fn builder_with_file_logging() {
+    // Test file logging to platform default directory
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_file_logging()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_log_dir_platform_default() {
+    // Test with explicit LogDir target
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_log_dir(LogTarget::LogDir)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_log_dir_custom_folder() {
+    // Test with custom folder target
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_log_dir(LogTarget::Folder(PathBuf::from("/tmp/test-logs")))
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_full_configuration_with_file_logging() {
+    // Test a fully configured builder with file logging
+    let _plugin = Builder::new()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .with_target("tao::platform_impl", LevelFilter::WARN)
+        .with_target("wry", LevelFilter::WARN)
+        .with_file_logging()
+        .build::<tauri::Wry>();
 }
