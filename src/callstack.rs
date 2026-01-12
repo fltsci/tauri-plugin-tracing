@@ -1,8 +1,17 @@
+//! Call stack parsing and filtering utilities.
+//!
+//! This module provides types for parsing JavaScript call stacks and extracting
+//! meaningful location information for log messages.
+
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "colored")]
 use colored::*;
 
+/// A single line from a JavaScript call stack.
+///
+/// This type wraps a string and provides methods for extracting location
+/// information while filtering out noise like `node_modules` paths.
 #[derive(Deserialize, Serialize, Clone)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct CallStackLine(String);
@@ -57,9 +66,12 @@ impl std::fmt::Debug for CallStackLine {
 }
 
 impl CallStackLine {
+    /// Replaces occurrences of a substring with another string.
     pub fn replace(&self, from: &str, to: &str) -> Self {
         CallStackLine(self.0.replace(from, to))
     }
+
+    /// Removes the `localhost:PORT/` prefix from URLs for cleaner output.
     fn strip_localhost(&self) -> String {
         let mut result = self.to_string();
         if let Some(start) = result.find("localhost:")
@@ -71,6 +83,10 @@ impl CallStackLine {
     }
 }
 
+/// A parsed JavaScript call stack.
+///
+/// This type parses a newline-separated call stack string and provides methods
+/// to extract different levels of location detail for log messages.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct CallStack(pub Vec<CallStackLine>);
@@ -98,10 +114,16 @@ impl From<Option<String>> for CallStack {
 }
 
 impl CallStack {
+    /// Creates a new `CallStack` from an optional string.
     pub fn new(value: Option<&str>) -> Self {
         CallStack::from(value)
     }
 
+    /// Returns the full filtered location as a `#`-separated string.
+    ///
+    /// This includes all stack frames that pass the filter (excluding
+    /// `node_modules` and native code), joined with `#`.
+    /// Used for `trace` and `error` log levels.
     pub fn location(&self) -> CallStackLine {
         CallStackLine(
             self.0
@@ -113,6 +135,10 @@ impl CallStack {
         )
     }
 
+    /// Returns the path of the last (most recent) stack frame.
+    ///
+    /// This extracts just the last location from the full call stack.
+    /// Used for `debug` and `warn` log levels.
     pub fn path(&self) -> CallStackLine {
         match self.location().split("#").last() {
             Some(file_name) => CallStackLine(file_name.to_string()),
@@ -120,6 +146,10 @@ impl CallStack {
         }
     }
 
+    /// Returns just the filename (without path) of the most recent stack frame.
+    ///
+    /// This is the most concise location format.
+    /// Used for `info` log level.
     pub fn file_name(&self) -> CallStackLine {
         match self.location().split("/").last() {
             Some(file_name) => CallStackLine(file_name.to_string()),
@@ -128,8 +158,13 @@ impl CallStack {
     }
 }
 
+/// Substrings that indicate a stack frame should be filtered out.
 const FILTERED_LINES: [&str; 2] = ["node_modules", "forEach@[native code]"];
 
+/// Filters and transforms a call stack line.
+///
+/// Returns `None` if the line should be filtered out (e.g., `node_modules`),
+/// otherwise returns the line with localhost URLs stripped.
 fn fmap_location(line: &CallStackLine) -> Option<String> {
     if FILTERED_LINES
         .iter()
