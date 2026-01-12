@@ -3,4 +3,4 @@
 "tracing-js": patch
 ---
 
-Add rustdocs to public API and feature parity roadmap to README.
+Add documentation: rustdocs for Rust public API, JSDoc for TypeScript API, integration tests, and feature parity roadmap in README.
