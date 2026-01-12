@@ -1,3 +1,18 @@
+//! Performance timing utilities.
+//!
+//! This module provides `console.time()`/`console.timeEnd()` style timing
+//! functionality for measuring performance in Tauri applications.
+//!
+//! # Example
+//!
+//! ```javascript
+//! import { time, timeEnd } from '@fltsci/tauri-plugin-tracing';
+//!
+//! time('database-query');
+//! // ... perform operation ...
+//! timeEnd('database-query');  // Logs: "database-query: 123.456ms"
+//! ```
+
 use crate::callstack::*;
 use ahash::{HashMap, HashMapExt};
 use compact_str::CompactString;
@@ -7,10 +22,16 @@ use tauri::Runtime;
 use tokio::sync::Mutex;
 use tracing::{Level, event, instrument};
 
+/// The tracing target used for timing end events.
 const TIME_END_SPAN: &str = "end";
 
+/// Type alias for the map storing active timers.
 pub type TimingMap = HashMap<CompactString, Instant>;
 
+/// Thread-safe storage for active performance timers.
+///
+/// This struct is managed by Tauri's state system and provides
+/// async-safe access to timing data.
 pub struct Timings(Mutex<TimingMap>);
 
 impl Default for Timings {
