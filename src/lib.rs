@@ -595,20 +595,17 @@ fn acquire_logger<R: Runtime>(
 ) -> Result<Option<WorkerGuard>> {
     let filter_with_default = filter.with_default(log_level);
 
-    // Create console layer
-    #[cfg(feature = "colored")]
-    let console_layer = fmt::layer().with_ansi(use_colors).with_target(true);
-
-    #[cfg(not(feature = "colored"))]
-    let console_layer = fmt::layer().with_ansi(false).with_target(true);
-
     // Set up subscriber with or without file logging
     let guard = if let Some(target) = file_log {
         let log_dir = resolve_log_dir(app_handle, &target)?;
         let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
-        // File layer without ANSI colors
+        // When file logging is enabled, disable ANSI on both layers.
+        // This is because tracing-subscriber shares span field formatting between layers,
+        // so ANSI codes from the console layer would appear in file output.
+        let console_layer = fmt::layer().with_ansi(false).with_target(true);
+
         let file_layer = fmt::layer()
             .with_ansi(false)
             .with_target(true)
@@ -622,6 +619,13 @@ fn acquire_logger<R: Runtime>(
         tracing::subscriber::set_global_default(subscriber)?;
         Some(guard)
     } else {
+        // Console-only: use colors if enabled
+        #[cfg(feature = "colored")]
+        let console_layer = fmt::layer().with_ansi(use_colors).with_target(true);
+
+        #[cfg(not(feature = "colored"))]
+        let console_layer = fmt::layer().with_ansi(false).with_target(true);
+
         let subscriber = Registry::default()
             .with(console_layer)
             .with(filter_with_default);

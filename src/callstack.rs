@@ -5,9 +5,6 @@
 
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "colored")]
-use colored::*;
-
 /// A single line from a JavaScript call stack.
 ///
 /// This type wraps a string and provides methods for extracting location
@@ -67,11 +64,6 @@ impl std::ops::DerefMut for CallStackLine {
 }
 
 impl std::fmt::Display for CallStackLine {
-    #[cfg(feature = "colored")]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.dimmed())
-    }
-    #[cfg(not(feature = "colored"))]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
