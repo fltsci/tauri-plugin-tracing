@@ -1,5 +1,5 @@
 [workspace]
-members = ["examples/tauri-app/src-tauri"]
+members = ["examples/default-subscriber/src-tauri", "examples/custom-subscriber/src-tauri"]
 resolver = "2"
 
 [package]

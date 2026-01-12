@@ -1,14 +1,14 @@
 [package]
-name = "tauri-app"
+name = "example-default-subscriber"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
+description = "Example using with_default_subscriber()"
+authors = ["Flight Science"]
+license = "MIT"
 repository = ""
 edition = "2024"
 
 [lib]
-name = "tauri_app_lib"
+name = "example_default_subscriber_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
