@@ -300,6 +300,11 @@ fn record_payload_levels() {
             level,
         };
         let json = serde_json::to_string(&payload).unwrap();
-        assert!(json.contains(expected_num), "Expected {} in {}", expected_num, json);
+        assert!(
+            json.contains(expected_num),
+            "Expected {} in {}",
+            expected_num,
+            json
+        );
     }
 }
