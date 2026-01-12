@@ -71,11 +71,26 @@ fn log_level_to_tracing() {
 
 #[test]
 fn log_level_from_tracing() {
-    assert!(matches!(LogLevel::from(tracing::Level::TRACE), LogLevel::Trace));
-    assert!(matches!(LogLevel::from(tracing::Level::DEBUG), LogLevel::Debug));
-    assert!(matches!(LogLevel::from(tracing::Level::INFO), LogLevel::Info));
-    assert!(matches!(LogLevel::from(tracing::Level::WARN), LogLevel::Warn));
-    assert!(matches!(LogLevel::from(tracing::Level::ERROR), LogLevel::Error));
+    assert!(matches!(
+        LogLevel::from(tracing::Level::TRACE),
+        LogLevel::Trace
+    ));
+    assert!(matches!(
+        LogLevel::from(tracing::Level::DEBUG),
+        LogLevel::Debug
+    ));
+    assert!(matches!(
+        LogLevel::from(tracing::Level::INFO),
+        LogLevel::Info
+    ));
+    assert!(matches!(
+        LogLevel::from(tracing::Level::WARN),
+        LogLevel::Warn
+    ));
+    assert!(matches!(
+        LogLevel::from(tracing::Level::ERROR),
+        LogLevel::Error
+    ));
 }
 
 #[test]
