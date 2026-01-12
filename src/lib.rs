@@ -13,30 +13,63 @@
 //!
 //! ## Usage
 //!
+//! By default, this plugin does **not** set up a global tracing subscriber,
+//! following the convention that libraries should not set globals. You compose
+//! your own subscriber using [`WebviewLayer`] to forward logs to the frontend:
+//!
 //! ```rust,ignore
-//! use tauri_plugin_tracing::{Builder, LevelFilter};
+//! use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
+//! use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
 //!
 //! fn main() {
+//!     let tracing_builder = Builder::new()
+//!         .with_max_level(LevelFilter::DEBUG)
+//!         .with_target("hyper", LevelFilter::WARN);
+//!     let filter = tracing_builder.build_filter();
+//!
 //!     tauri::Builder::default()
-//!         .plugin(
-//!             Builder::new()
-//!                 .with_max_level(LevelFilter::DEBUG)
-//!                 .with_target("my_app", LevelFilter::TRACE)
-//!                 .build(),
-//!         )
+//!         .plugin(tracing_builder.build())
+//!         .setup(move |app| {
+//!             let subscriber = Registry::default()
+//!                 .with(fmt::layer())
+//!                 .with(WebviewLayer::new(app.handle().clone()))
+//!                 .with(filter);
+//!             tracing::subscriber::set_global_default(subscriber)?;
+//!             Ok(())
+//!         })
 //!         .run(tauri::generate_context!())
 //!         .expect("error while running tauri application");
 //! }
 //! ```
 //!
+//! ## Quick Start
+//!
+//! For simple applications, use [`Builder::with_default_subscriber()`] to let
+//! the plugin handle all tracing setup:
+//!
+//! ```rust,ignore
+//! use tauri_plugin_tracing::{Builder, LevelFilter};
+//!
+//! tauri::Builder::default()
+//!     .plugin(
+//!         Builder::new()
+//!             .with_max_level(LevelFilter::DEBUG)
+//!             .with_default_subscriber()  // Let plugin set up tracing
+//!             .build(),
+//!     )
+//!     .run(tauri::generate_context!())
+//!     .expect("error while running tauri application");
+//! ```
+//!
 //! ## File Logging
 //!
-//! Enable file logging to write logs to the platform-standard log directory:
+//! File logging requires [`Builder::with_default_subscriber()`]:
 //!
 //! ```rust,ignore
 //! Builder::new()
 //!     .with_max_level(LevelFilter::DEBUG)
-//!     .with_file_logging()  // Logs to platform log directory
+//!     .with_file_logging()
+//!     .with_default_subscriber()
 //!     .build()
 //! ```
 //!
@@ -304,12 +337,42 @@ pub struct RecordPayload {
 /// This layer intercepts all log events and forwards them to the frontend
 /// via the `tracing://log` event, allowing JavaScript code to receive
 /// logs using `attachLogger()` or `attachConsole()`.
-struct WebviewLayer<R: Runtime> {
+///
+/// # Example
+///
+/// By default, the plugin does not set up a global subscriber. Use this layer
+/// when composing your own subscriber:
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
+/// use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+///
+/// let builder = Builder::new()
+///     .with_max_level(LevelFilter::DEBUG);
+/// let filter = builder.build_filter();
+///
+/// tauri::Builder::default()
+///     .plugin(builder.build())
+///     .setup(move |app| {
+///         let subscriber = Registry::default()
+///             .with(fmt::layer())
+///             .with(WebviewLayer::new(app.handle().clone()))
+///             .with(filter);
+///         tracing::subscriber::set_global_default(subscriber)?;
+///         Ok(())
+///     })
+///     .run(tauri::generate_context!())
+///     .expect("error while running tauri application");
+/// ```
+pub struct WebviewLayer<R: Runtime> {
     app_handle: AppHandle<R>,
 }
 
 impl<R: Runtime> WebviewLayer<R> {
-    fn new(app_handle: AppHandle<R>) -> Self {
+    /// Creates a new WebviewLayer that forwards log events to the given app handle.
+    ///
+    /// Events are emitted via the `tracing://log` event channel.
+    pub fn new(app_handle: AppHandle<R>) -> Self {
         Self { app_handle }
     }
 }
@@ -498,6 +561,7 @@ pub struct Builder {
     file_log: Option<LogTarget>,
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
+    set_default_subscriber: bool,
     #[cfg(feature = "colored")]
     use_colors: bool,
 }
@@ -511,6 +575,7 @@ impl Default for Builder {
             file_log: None,
             rotation: Rotation::default(),
             rotation_strategy: RotationStrategy::default(),
+            set_default_subscriber: false,
             #[cfg(feature = "colored")]
             use_colors: false,
         }
@@ -654,6 +719,72 @@ impl Builder {
         self
     }
 
+    /// Enables the plugin to set up and register the global tracing subscriber.
+    ///
+    /// By default, this plugin does **not** call [`tracing::subscriber::set_global_default()`],
+    /// following the convention that libraries should not set globals. This allows your
+    /// application to compose its own subscriber with layers from multiple crates.
+    ///
+    /// Call this method if you want the plugin to handle all tracing setup for you,
+    /// using the configuration from this builder (log levels, targets, file logging, etc.).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, LevelFilter};
+    ///
+    /// // Let the plugin set up everything
+    /// tauri::Builder::default()
+    ///     .plugin(
+    ///         Builder::new()
+    ///             .with_max_level(LevelFilter::DEBUG)
+    ///             .with_file_logging()
+    ///             .with_default_subscriber()  // Opt-in to global subscriber
+    ///             .build()
+    ///     )
+    ///     .run(tauri::generate_context!())
+    ///     .expect("error while running tauri application");
+    /// ```
+    pub fn with_default_subscriber(mut self) -> Self {
+        self.set_default_subscriber = true;
+        self
+    }
+
+    /// Returns the configured filter based on log level and per-target settings.
+    ///
+    /// Use this when setting up your own subscriber to apply the same filtering
+    /// configured via [`with_max_level()`](Self::with_max_level) and
+    /// [`with_target()`](Self::with_target).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
+    /// use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+    ///
+    /// let builder = Builder::new()
+    ///     .with_max_level(LevelFilter::DEBUG)
+    ///     .with_target("hyper", LevelFilter::WARN);
+    ///
+    /// let filter = builder.build_filter();
+    ///
+    /// tauri::Builder::default()
+    ///     .plugin(builder.build())
+    ///     .setup(move |app| {
+    ///         let subscriber = Registry::default()
+    ///             .with(fmt::layer())
+    ///             .with(WebviewLayer::new(app.handle().clone()))
+    ///             .with(filter);
+    ///         tracing::subscriber::set_global_default(subscriber)?;
+    ///         Ok(())
+    ///     })
+    ///     .run(tauri::generate_context!())
+    ///     .expect("error while running tauri application");
+    /// ```
+    pub fn build_filter(&self) -> Targets {
+        self.filter.clone().with_default(self.log_level)
+    }
+
     #[cfg(feature = "timing")]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing")
@@ -684,6 +815,7 @@ impl Builder {
         let file_log = self.file_log;
         let rotation = self.rotation;
         let rotation_strategy = self.rotation_strategy;
+        let set_default_subscriber = self.set_default_subscriber;
 
         #[cfg(feature = "colored")]
         let use_colors = self.use_colors;
@@ -694,7 +826,7 @@ impl Builder {
                 setup_timings(app);
 
                 #[cfg(desktop)]
-                {
+                if set_default_subscriber {
                     let guard = acquire_logger(
                         app,
                         log_level,

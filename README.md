@@ -48,4 +48,4 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 
 ### Known Issues / Future Work
 
-- [ ] Find alternative to `set_global_default()` - currently prevents apps from setting up their own tracing subscriber before plugin init
+- [x] ~~Find alternative to `set_global_default()`~~ - plugin no longer sets global by default; use `WebviewLayer` + `build_filter()` for custom setup, or `with_default_subscriber()` for convenience

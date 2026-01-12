@@ -2,7 +2,8 @@ use tauri_plugin_tracing::{LevelFilter, Rotation, RotationStrategy};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Configure the tracing plugin with file logging and rotation
+    // Configure the tracing plugin with file logging and rotation.
+    // Using with_default_subscriber() lets the plugin set up the global subscriber.
     let tracing_plugin = tauri_plugin_tracing::Builder::default()
         .with_colors()
         .with_max_level(LevelFilter::TRACE)
@@ -17,6 +18,8 @@ pub fn run() {
         // Rotate logs daily and keep the last 7 files
         .with_rotation(Rotation::Daily)
         .with_rotation_strategy(RotationStrategy::KeepSome(7))
+        // Let the plugin set up the global tracing subscriber
+        .with_default_subscriber()
         .build();
 
     tauri::Builder::default()
