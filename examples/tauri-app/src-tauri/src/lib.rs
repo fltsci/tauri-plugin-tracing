@@ -1,8 +1,8 @@
-use tauri_plugin_tracing::LevelFilter;
+use tauri_plugin_tracing::{LevelFilter, Rotation, RotationStrategy};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Configure the tracing plugin with file logging
+    // Configure the tracing plugin with file logging and rotation
     let tracing_plugin = tauri_plugin_tracing::Builder::default()
         .with_colors()
         .with_max_level(LevelFilter::TRACE)
@@ -14,6 +14,9 @@ pub fn run() {
         // Linux: ~/.local/share/{bundle_id}/logs/app.YYYY-MM-DD.log
         // Windows: %LOCALAPPDATA%/{bundle_id}/logs/app.YYYY-MM-DD.log
         .with_file_logging()
+        // Rotate logs daily and keep the last 7 files
+        .with_rotation(Rotation::Daily)
+        .with_rotation_strategy(RotationStrategy::KeepSome(7))
         .build();
 
     tauri::Builder::default()
@@ -25,7 +28,7 @@ pub fn run() {
                 app.get_webview_window("main").unwrap().open_devtools();
             }
 
-            tauri_plugin_tracing::tracing::info!("App initialized with file logging");
+            tauri_plugin_tracing::tracing::info!("App initialized with file logging and rotation");
             Ok(())
         })
         .build(tauri::generate_context!())

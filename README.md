@@ -13,7 +13,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] Strip ANSI codes from messages
 - [x] File logging (LogDir target)
 - [x] Custom folder logging
-- [ ] Log rotation (KeepAll, KeepOne, KeepSome)
+- [x] Log rotation (KeepAll, KeepOne, KeepSome)
 - [ ] Max file size configuration
 - [ ] Timezone configuration (UTC/local)
 
@@ -30,8 +30,9 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] `with_max_level()` - global log level
 - [x] `with_target()` - per-module levels
 - [x] `with_colors()` - colored output
+- [x] `with_rotation()` - time-based rotation period
+- [x] `with_rotation_strategy()` - file retention policy
 - [ ] `targets()` / `target()` - configure log destinations
-- [ ] `rotation_strategy()` - file rotation policy
 - [ ] `max_file_size()` - rotation threshold
 - [ ] `timezone_strategy()` - timestamp timezone
 - [ ] `format()` / `clear_format()` - custom formatting
