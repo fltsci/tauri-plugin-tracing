@@ -204,6 +204,58 @@ pub enum LogTarget {
     Folder(PathBuf),
 }
 
+/// Time-based rotation period for log files.
+///
+/// This controls how often new log files are created.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, Rotation};
+///
+/// Builder::new()
+///     .with_file_logging()
+///     .with_rotation(Rotation::Daily)  // Create new file each day
+///     .build()
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Rotation {
+    /// Rotate logs daily. Files are named `app.YYYY-MM-DD.log`.
+    #[default]
+    Daily,
+    /// Rotate logs hourly. Files are named `app.YYYY-MM-DD-HH.log`.
+    Hourly,
+    /// Rotate logs every minute. Files are named `app.YYYY-MM-DD-HH-MM.log`.
+    Minutely,
+    /// Never rotate. All logs go to `app.log`.
+    Never,
+}
+
+/// Retention policy for rotated log files.
+///
+/// This controls how many old log files are kept when the application starts.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, RotationStrategy};
+///
+/// Builder::new()
+///     .with_file_logging()
+///     .with_rotation_strategy(RotationStrategy::KeepSome(7))  // Keep 7 most recent files
+///     .build()
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub enum RotationStrategy {
+    /// Keep all rotated log files.
+    #[default]
+    KeepAll,
+    /// Keep only the current log file, deleting all previous ones.
+    KeepOne,
+    /// Keep the N most recent log files.
+    KeepSome(u32),
+}
+
 /// Stores the WorkerGuard to ensure logs are flushed on shutdown.
 /// This must be kept alive for the lifetime of the application.
 struct LogGuard(#[allow(dead_code)] Option<WorkerGuard>);
@@ -388,6 +440,8 @@ pub struct Builder {
     log_level: LevelFilter,
     filter: Targets,
     file_log: Option<LogTarget>,
+    rotation: Rotation,
+    rotation_strategy: RotationStrategy,
     #[cfg(feature = "colored")]
     use_colors: bool,
 }
@@ -399,6 +453,8 @@ impl Default for Builder {
             log_level: LevelFilter::WARN,
             filter: Targets::default(),
             file_log: None,
+            rotation: Rotation::default(),
+            rotation_strategy: RotationStrategy::default(),
             #[cfg(feature = "colored")]
             use_colors: false,
         }
@@ -502,6 +558,46 @@ impl Builder {
         self
     }
 
+    /// Sets the rotation period for log files.
+    ///
+    /// This controls how often new log files are created. Only applies when
+    /// file logging is enabled.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, Rotation};
+    ///
+    /// Builder::new()
+    ///     .with_file_logging()
+    ///     .with_rotation(Rotation::Hourly)  // Rotate every hour
+    ///     .build()
+    /// ```
+    pub fn with_rotation(mut self, rotation: Rotation) -> Self {
+        self.rotation = rotation;
+        self
+    }
+
+    /// Sets the retention strategy for rotated log files.
+    ///
+    /// This controls how many old log files are kept. Cleanup happens when
+    /// the application starts.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, RotationStrategy};
+    ///
+    /// Builder::new()
+    ///     .with_file_logging()
+    ///     .with_rotation_strategy(RotationStrategy::KeepSome(7))  // Keep 7 files
+    ///     .build()
+    /// ```
+    pub fn with_rotation_strategy(mut self, strategy: RotationStrategy) -> Self {
+        self.rotation_strategy = strategy;
+        self
+    }
+
     #[cfg(feature = "timing")]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing")
@@ -530,6 +626,8 @@ impl Builder {
         let log_level = self.log_level;
         let filter = self.filter;
         let file_log = self.file_log;
+        let rotation = self.rotation;
+        let rotation_strategy = self.rotation_strategy;
 
         #[cfg(feature = "colored")]
         let use_colors = self.use_colors;
@@ -546,6 +644,8 @@ impl Builder {
                         log_level,
                         filter,
                         file_log,
+                        rotation,
+                        rotation_strategy,
                         #[cfg(feature = "colored")]
                         use_colors,
                     )?;
@@ -584,6 +684,50 @@ fn resolve_log_dir<R: Runtime>(app_handle: &AppHandle<R>, target: &LogTarget) ->
     }
 }
 
+/// Cleans up old log files based on the retention strategy.
+fn cleanup_old_logs(log_dir: &std::path::Path, strategy: RotationStrategy) -> Result<()> {
+    match strategy {
+        RotationStrategy::KeepAll => {
+            // Nothing to do
+            Ok(())
+        }
+        RotationStrategy::KeepOne => {
+            // Delete all log files except the most recent
+            cleanup_logs_keeping(log_dir, 1)
+        }
+        RotationStrategy::KeepSome(n) => {
+            // Keep n most recent log files
+            cleanup_logs_keeping(log_dir, n as usize)
+        }
+    }
+}
+
+/// Helper to delete old log files, keeping only the most recent `keep` files.
+fn cleanup_logs_keeping(log_dir: &std::path::Path, keep: usize) -> Result<()> {
+    let mut log_files: Vec<_> = std::fs::read_dir(log_dir)?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| {
+            entry
+                .file_name()
+                .to_str()
+                .is_some_and(|name| name.starts_with("app.") && name.ends_with(".log"))
+        })
+        .collect();
+
+    // Sort by filename (which includes date) in descending order (newest first)
+    log_files.sort_by_key(|entry| std::cmp::Reverse(entry.file_name()));
+
+    // Delete all but the most recent `keep` files
+    for entry in log_files.into_iter().skip(keep) {
+        if let Err(e) = std::fs::remove_file(entry.path()) {
+            // Log but don't fail - best effort cleanup
+            tracing::warn!("Failed to remove old log file {:?}: {}", entry.path(), e);
+        }
+    }
+
+    Ok(())
+}
+
 /// Sets up the tracing subscriber with console output and optional file logging.
 #[instrument(skip_all)]
 fn acquire_logger<R: Runtime>(
@@ -591,6 +735,8 @@ fn acquire_logger<R: Runtime>(
     log_level: LevelFilter,
     filter: Targets,
     file_log: Option<LogTarget>,
+    rotation: Rotation,
+    rotation_strategy: RotationStrategy,
     #[cfg(feature = "colored")] use_colors: bool,
 ) -> Result<Option<WorkerGuard>> {
     let filter_with_default = filter.with_default(log_level);
@@ -598,7 +744,17 @@ fn acquire_logger<R: Runtime>(
     // Set up subscriber with or without file logging
     let guard = if let Some(target) = file_log {
         let log_dir = resolve_log_dir(app_handle, &target)?;
-        let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
+
+        // Clean up old log files based on retention strategy
+        cleanup_old_logs(&log_dir, rotation_strategy)?;
+
+        // Create rolling file appender based on rotation period
+        let file_appender = match rotation {
+            Rotation::Daily => tracing_appender::rolling::daily(&log_dir, "app"),
+            Rotation::Hourly => tracing_appender::rolling::hourly(&log_dir, "app"),
+            Rotation::Minutely => tracing_appender::rolling::minutely(&log_dir, "app"),
+            Rotation::Never => tracing_appender::rolling::never(&log_dir, "app"),
+        };
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
         // When file logging is enabled, disable ANSI on both layers.

@@ -4,7 +4,9 @@
 //! which cannot be tested via doctests in the main crate.
 
 use std::path::PathBuf;
-use tauri_plugin_tracing::{Builder, CallStack, CallStackLine, LevelFilter, LogLevel, LogTarget};
+use tauri_plugin_tracing::{
+    Builder, CallStack, CallStackLine, LevelFilter, LogLevel, LogTarget, Rotation, RotationStrategy,
+};
 
 #[test]
 fn builder_default() {
@@ -207,5 +209,61 @@ fn builder_full_configuration_with_file_logging() {
         .with_target("tao::platform_impl", LevelFilter::WARN)
         .with_target("wry", LevelFilter::WARN)
         .with_file_logging()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_rotation() {
+    // Test different rotation periods
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation(Rotation::Daily)
+        .build::<tauri::Wry>();
+
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation(Rotation::Hourly)
+        .build::<tauri::Wry>();
+
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation(Rotation::Minutely)
+        .build::<tauri::Wry>();
+
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation(Rotation::Never)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_rotation_strategy() {
+    // Test different rotation strategies
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation_strategy(RotationStrategy::KeepAll)
+        .build::<tauri::Wry>();
+
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation_strategy(RotationStrategy::KeepOne)
+        .build::<tauri::Wry>();
+
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation_strategy(RotationStrategy::KeepSome(7))
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_full_rotation_configuration() {
+    // Test full configuration like the example app
+    let _plugin = Builder::new()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .with_target("tao::platform_impl", LevelFilter::WARN)
+        .with_file_logging()
+        .with_rotation(Rotation::Daily)
+        .with_rotation_strategy(RotationStrategy::KeepSome(7))
         .build::<tauri::Wry>();
 }
