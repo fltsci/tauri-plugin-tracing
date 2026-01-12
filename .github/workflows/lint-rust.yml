@@ -79,10 +79,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.packages != '[]' && needs.changes.outputs.packages != '' }}
     runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJSON(needs.changes.outputs.packages) }}
 
     steps:
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -101,8 +97,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: test ${{ matrix.package }}
-        run: cargo nextest run --package ${{ matrix.package }}
+      - name: test workspace
+        run: cargo nextest run --workspace
 
-      - name: test ${{ matrix.package }} --all-features
-        run: cargo nextest run --package ${{ matrix.package }} --all-features
+      - name: test workspace --all-features
+        run: cargo nextest run --workspace --all-features
