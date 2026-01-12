@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.7]
+
+- [`dcc07fa`](https://github.com/fltsci/tauri-plugin-tracing/commit/dcc07fa0a5f12d20f513ceff49220566b7f7b050) ([#44](https://github.com/fltsci/tauri-plugin-tracing/pull/44) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add documentation: rustdocs for Rust public API, JSDoc for TypeScript API, integration tests, and feature parity roadmap in README.
+
 ## \[0.2.0-canary.6]
 
 - [`8a183d9`](https://github.com/fltsci/tauri-plugin-tracing/commit/8a183d94733787ec0876fdb77f820db2b1d3f1f9) ([#42](https://github.com/fltsci/tauri-plugin-tracing/pull/42) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Include window name in tracing logs.
