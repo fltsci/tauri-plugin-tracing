@@ -35,7 +35,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] `targets()` / `target()` / `clear_targets()` - configure log destinations (Stdout, Stderr, Webview, LogDir, Folder)
 - [x] `with_max_file_size()` - size-based rotation threshold
 - [x] `with_timezone_strategy()` - timestamp timezone (UTC or local)
-- [ ] `format()` / `clear_format()` - custom formatting
+- [x] `with_format()` + format options - custom formatting
 - [x] `filter()` - metadata-based filtering
 - [ ] Custom tracing layers/targets
 

@@ -341,6 +341,76 @@ pub enum RotationStrategy {
     KeepSome(u32),
 }
 
+/// Log output format style.
+///
+/// Controls the overall structure and verbosity of log output.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, LogFormat};
+///
+/// Builder::new()
+///     .with_format(LogFormat::Compact)
+///     .build()
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub enum LogFormat {
+    /// The default format with all information on a single line.
+    ///
+    /// Output: `2024-01-15T10:30:00.000Z INFO my_app: message field=value`
+    #[default]
+    Full,
+
+    /// A compact format optimized for shorter line lengths.
+    ///
+    /// Fields from the current span context are appended to the event fields
+    /// rather than displayed in a separate section.
+    Compact,
+
+    /// A multi-line, human-readable format for development.
+    ///
+    /// Includes colorful formatting, indentation, and verbose span information.
+    /// Best suited for local development and debugging.
+    Pretty,
+}
+
+/// Configuration options for log output formatting.
+///
+/// This struct bundles all the formatting options that control what
+/// information is included in log output.
+#[derive(Debug, Clone, Copy)]
+pub struct FormatOptions {
+    /// The overall format style.
+    pub format: LogFormat,
+    /// Whether to show the source file path.
+    pub file: bool,
+    /// Whether to show the source line number.
+    pub line_number: bool,
+    /// Whether to show thread IDs.
+    pub thread_ids: bool,
+    /// Whether to show thread names.
+    pub thread_names: bool,
+    /// Whether to show the log target (module path).
+    pub target: bool,
+    /// Whether to show the log level.
+    pub level: bool,
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self {
+            format: LogFormat::default(),
+            file: false,
+            line_number: false,
+            thread_ids: false,
+            thread_names: false,
+            target: true,
+            level: true,
+        }
+    }
+}
+
 /// Maximum file size for log rotation.
 ///
 /// Provides convenient constructors for common size units.
@@ -695,6 +765,13 @@ pub struct Builder {
     rotation_strategy: RotationStrategy,
     max_file_size: Option<MaxFileSize>,
     timezone_strategy: TimezoneStrategy,
+    log_format: LogFormat,
+    show_file: bool,
+    show_line_number: bool,
+    show_thread_ids: bool,
+    show_thread_names: bool,
+    show_target: bool,
+    show_level: bool,
     set_default_subscriber: bool,
     #[cfg(feature = "colored")]
     use_colors: bool,
@@ -712,6 +789,13 @@ impl Default for Builder {
             rotation_strategy: RotationStrategy::default(),
             max_file_size: None,
             timezone_strategy: TimezoneStrategy::default(),
+            log_format: LogFormat::default(),
+            show_file: false,
+            show_line_number: false,
+            show_thread_ids: false,
+            show_thread_names: false,
+            show_target: true,
+            show_level: true,
             set_default_subscriber: false,
             #[cfg(feature = "colored")]
             use_colors: false,
@@ -919,6 +1003,149 @@ impl Builder {
         self
     }
 
+    /// Sets the log output format style.
+    ///
+    /// Controls the overall structure of log output. The default is [`LogFormat::Full`].
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, LogFormat};
+    ///
+    /// // Use compact format for shorter lines
+    /// Builder::new()
+    ///     .with_format(LogFormat::Compact)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_format(mut self, format: LogFormat) -> Self {
+        self.log_format = format;
+        self
+    }
+
+    /// Sets whether to include the source file path in log output.
+    ///
+    /// When enabled, logs will show which file the log event originated from.
+    /// Default is `false`.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// Builder::new()
+    ///     .with_file(true)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_file(mut self, show: bool) -> Self {
+        self.show_file = show;
+        self
+    }
+
+    /// Sets whether to include the source line number in log output.
+    ///
+    /// When enabled, logs will show which line number the log event originated from.
+    /// Default is `false`.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// Builder::new()
+    ///     .with_line_number(true)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_line_number(mut self, show: bool) -> Self {
+        self.show_line_number = show;
+        self
+    }
+
+    /// Sets whether to include the current thread ID in log output.
+    ///
+    /// When enabled, logs will show the ID of the thread that emitted the event.
+    /// Default is `false`.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// Builder::new()
+    ///     .with_thread_ids(true)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_thread_ids(mut self, show: bool) -> Self {
+        self.show_thread_ids = show;
+        self
+    }
+
+    /// Sets whether to include the current thread name in log output.
+    ///
+    /// When enabled, logs will show the name of the thread that emitted the event.
+    /// Default is `false`.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// Builder::new()
+    ///     .with_thread_names(true)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_thread_names(mut self, show: bool) -> Self {
+        self.show_thread_names = show;
+        self
+    }
+
+    /// Sets whether to include the log target (module path) in log output.
+    ///
+    /// When enabled, logs will show which module/target emitted the event.
+    /// Default is `true`.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// // Disable target display for cleaner output
+    /// Builder::new()
+    ///     .with_target_display(false)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_target_display(mut self, show: bool) -> Self {
+        self.show_target = show;
+        self
+    }
+
+    /// Sets whether to include the log level in log output.
+    ///
+    /// When enabled, logs will show the severity level (TRACE, DEBUG, INFO, etc.).
+    /// Default is `true`.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// // Disable level display
+    /// Builder::new()
+    ///     .with_level(false)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_level(mut self, show: bool) -> Self {
+        self.show_level = show;
+        self
+    }
+
     /// Adds a log output target.
     ///
     /// By default, logs are sent to [`Target::Stdout`] and [`Target::Webview`].
@@ -1065,6 +1292,24 @@ impl Builder {
         self.timezone_strategy
     }
 
+    /// Returns the configured log format style.
+    pub fn configured_format(&self) -> LogFormat {
+        self.log_format
+    }
+
+    /// Returns the configured format options.
+    pub fn configured_format_options(&self) -> FormatOptions {
+        FormatOptions {
+            format: self.log_format,
+            file: self.show_file,
+            line_number: self.show_line_number,
+            thread_ids: self.show_thread_ids,
+            thread_names: self.show_thread_names,
+            target: self.show_target,
+            level: self.show_level,
+        }
+    }
+
     /// Returns the configured filter based on log level and per-target settings.
     ///
     /// Use this when setting up your own subscriber to apply the same filtering
@@ -1133,6 +1378,15 @@ impl Builder {
         let rotation_strategy = self.rotation_strategy;
         let max_file_size = self.max_file_size;
         let timezone_strategy = self.timezone_strategy;
+        let format_options = FormatOptions {
+            format: self.log_format,
+            file: self.show_file,
+            line_number: self.show_line_number,
+            thread_ids: self.show_thread_ids,
+            thread_names: self.show_thread_names,
+            target: self.show_target,
+            level: self.show_level,
+        };
         let set_default_subscriber = self.set_default_subscriber;
 
         #[cfg(feature = "colored")]
@@ -1155,6 +1409,7 @@ impl Builder {
                         rotation_strategy,
                         max_file_size,
                         timezone_strategy,
+                        format_options,
                         #[cfg(feature = "colored")]
                         use_colors,
                     )?;
@@ -1261,6 +1516,7 @@ fn acquire_logger<R: Runtime>(
     rotation_strategy: RotationStrategy,
     max_file_size: Option<MaxFileSize>,
     timezone_strategy: TimezoneStrategy,
+    format_options: FormatOptions,
     #[cfg(feature = "colored")] use_colors: bool,
 ) -> Result<Option<WorkerGuard>> {
     use std::io;
@@ -1303,28 +1559,46 @@ fn acquire_logger<R: Runtime>(
             }),
     };
 
+    // Macro to create a formatted layer with the appropriate format style.
+    // This is needed because .compact() and .pretty() return different types.
+    macro_rules! make_layer {
+        ($layer:expr, $format:expr) => {
+            match $format {
+                LogFormat::Full => $layer.boxed(),
+                LogFormat::Compact => $layer.compact().boxed(),
+                LogFormat::Pretty => $layer.pretty().boxed(),
+            }
+        };
+    }
+
     // Create optional layers based on targets
     let stdout_layer = if has_stdout {
-        Some(
-            fmt::layer()
-                .with_timer(make_timer())
-                .with_ansi(use_ansi)
-                .with_target(true)
-                .boxed(),
-        )
+        let layer = fmt::layer()
+            .with_timer(make_timer())
+            .with_ansi(use_ansi)
+            .with_file(format_options.file)
+            .with_line_number(format_options.line_number)
+            .with_thread_ids(format_options.thread_ids)
+            .with_thread_names(format_options.thread_names)
+            .with_target(format_options.target)
+            .with_level(format_options.level);
+        Some(make_layer!(layer, format_options.format))
     } else {
         None
     };
 
     let stderr_layer = if has_stderr {
-        Some(
-            fmt::layer()
-                .with_timer(make_timer())
-                .with_ansi(use_ansi)
-                .with_target(true)
-                .with_writer(io::stderr)
-                .boxed(),
-        )
+        let layer = fmt::layer()
+            .with_timer(make_timer())
+            .with_ansi(use_ansi)
+            .with_file(format_options.file)
+            .with_line_number(format_options.line_number)
+            .with_thread_ids(format_options.thread_ids)
+            .with_thread_names(format_options.thread_names)
+            .with_target(format_options.target)
+            .with_level(format_options.level)
+            .with_writer(io::stderr);
+        Some(make_layer!(layer, format_options.format))
     } else {
         None
     };
@@ -1374,11 +1648,15 @@ fn acquire_logger<R: Runtime>(
             let layer = fmt::layer()
                 .with_timer(make_timer())
                 .with_ansi(false)
-                .with_target(true)
-                .with_writer(non_blocking)
-                .boxed();
+                .with_file(format_options.file)
+                .with_line_number(format_options.line_number)
+                .with_thread_ids(format_options.thread_ids)
+                .with_thread_names(format_options.thread_names)
+                .with_target(format_options.target)
+                .with_level(format_options.level)
+                .with_writer(non_blocking);
 
-            (Some(layer), Some(guard))
+            (Some(make_layer!(layer, format_options.format)), Some(guard))
         } else {
             // Time-based rotation only using tracing-appender
             let file_appender = match rotation {
@@ -1400,11 +1678,15 @@ fn acquire_logger<R: Runtime>(
             let layer = fmt::layer()
                 .with_timer(make_timer())
                 .with_ansi(false)
-                .with_target(true)
-                .with_writer(non_blocking)
-                .boxed();
+                .with_file(format_options.file)
+                .with_line_number(format_options.line_number)
+                .with_thread_ids(format_options.thread_ids)
+                .with_thread_names(format_options.thread_names)
+                .with_target(format_options.target)
+                .with_level(format_options.level)
+                .with_writer(non_blocking);
 
-            (Some(layer), Some(guard))
+            (Some(make_layer!(layer, format_options.format)), Some(guard))
         }
     } else {
         (None, None)

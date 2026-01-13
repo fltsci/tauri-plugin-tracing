@@ -590,3 +590,126 @@ fn builder_with_filter_full_config() {
         .with_default_subscriber()
         .build::<tauri::Wry>();
 }
+
+#[test]
+fn log_format_default() {
+    use tauri_plugin_tracing::LogFormat;
+    assert!(matches!(LogFormat::default(), LogFormat::Full));
+}
+
+#[test]
+fn builder_with_format_full() {
+    use tauri_plugin_tracing::LogFormat;
+    let _plugin = Builder::new()
+        .with_format(LogFormat::Full)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_format_compact() {
+    use tauri_plugin_tracing::LogFormat;
+    let _plugin = Builder::new()
+        .with_format(LogFormat::Compact)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_format_pretty() {
+    use tauri_plugin_tracing::LogFormat;
+    let _plugin = Builder::new()
+        .with_format(LogFormat::Pretty)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_file_option() {
+    let _plugin = Builder::new().with_file(true).build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_line_number_option() {
+    let _plugin = Builder::new().with_line_number(true).build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_thread_ids_option() {
+    let _plugin = Builder::new().with_thread_ids(true).build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_thread_names_option() {
+    let _plugin = Builder::new().with_thread_names(true).build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_target_display_option() {
+    let _plugin = Builder::new()
+        .with_target_display(false)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_level_option() {
+    let _plugin = Builder::new().with_level(false).build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_configured_format() {
+    use tauri_plugin_tracing::LogFormat;
+
+    let builder = Builder::new();
+    assert!(matches!(builder.configured_format(), LogFormat::Full));
+
+    let builder = Builder::new().with_format(LogFormat::Compact);
+    assert!(matches!(builder.configured_format(), LogFormat::Compact));
+}
+
+#[test]
+fn builder_configured_format_options() {
+    use tauri_plugin_tracing::LogFormat;
+
+    let builder = Builder::new()
+        .with_format(LogFormat::Pretty)
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_target_display(false);
+
+    let options = builder.configured_format_options();
+    assert!(matches!(options.format, LogFormat::Pretty));
+    assert!(options.file);
+    assert!(options.line_number);
+    assert!(options.thread_ids);
+    assert!(!options.thread_names);
+    assert!(!options.target);
+    assert!(options.level);
+}
+
+#[test]
+fn builder_format_with_default_subscriber() {
+    use tauri_plugin_tracing::LogFormat;
+
+    let _plugin = Builder::new()
+        .with_format(LogFormat::Compact)
+        .with_file(true)
+        .with_line_number(true)
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_format_full_config() {
+    use tauri_plugin_tracing::LogFormat;
+
+    let _plugin = Builder::new()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .with_format(LogFormat::Pretty)
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_file_logging()
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
