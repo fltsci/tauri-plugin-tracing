@@ -100,7 +100,11 @@ describe('formatPrintf', () => {
   })
 
   it('returns remaining args when more args than specifiers', () => {
-    const [result, remaining] = formatPrintf('Hello %s', ['world', 'extra', 123])
+    const [result, remaining] = formatPrintf('Hello %s', [
+      'world',
+      'extra',
+      123
+    ])
     expect(result).toBe('Hello world')
     expect(remaining).toEqual(['extra', 123])
   })
