@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.12]
+
+- [`db4978d`](https://github.com/fltsci/tauri-plugin-tracing/commit/db4978ddb3c0ba105d27cacd842dc33d2b3beafa) ([#64](https://github.com/fltsci/tauri-plugin-tracing/pull/64) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add `StripAnsiWriter` for stripping ANSI escape codes from file writers, and printf-style format expansion (%s, %d, %i, %f, %o, %O) in JS. `StripAnsiWriter` uses a zero-copy fast path with SIMD-accelerated ESC byte detection via memchr.
+
 ## \[0.2.0-canary.11]
 
 - [`9eba679`](https://github.com/fltsci/tauri-plugin-tracing/commit/9eba679389dec8bedc60b83711210568496ed935) ([#62](https://github.com/fltsci/tauri-plugin-tracing/pull/62) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add automatic docs upload to Kellnr after publish.
