@@ -71,6 +71,7 @@
 //! For custom subscribers, use [`tracing_appender`] directly (re-exported by this crate):
 //!
 //! ```rust,no_run
+//! # use tauri::Manager;
 //! # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, tracing_appender};
 //! # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
 //! let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
@@ -80,7 +81,7 @@
 //!     .plugin(tracing_builder.build())
 //!     .setup(move |app| {
 //!         let log_dir = app.path().app_log_dir()?;
-//!         let file_appender = tracing_appender::rolling::daily(&log_dir, "app.log");
+//!         let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
 //!         let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 //!         // Store _guard in Tauri state to keep file logging active
 //!
@@ -103,7 +104,7 @@
 //! ## Early Initialization
 //!
 //! For maximum control, initialize tracing before creating the Tauri app. This
-//! pattern uses [`tracing_subscriber::registry()`] with [`try_init()`](tracing_subscriber::util::SubscriberInitExt::try_init)
+//! pattern uses [`tracing_subscriber::registry()`] with [`init()`](tracing_subscriber::util::SubscriberInitExt::init)
 //! and passes a minimal [`Builder`] to the plugin:
 //!
 //! ```rust,no_run
@@ -118,7 +119,7 @@
 //!     let log_dir = std::env::temp_dir().join("my-app");
 //!     let _ = std::fs::create_dir_all(&log_dir);
 //!
-//!     let file_appender = tracing_appender::rolling::daily(&log_dir, "app.log");
+//!     let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
 //!     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 //!     std::mem::forget(guard); // Keep file logging active for app lifetime
 //!

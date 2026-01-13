@@ -184,7 +184,7 @@ tauri::Builder::default()
     .plugin(builder.build())
     .setup(move |app| {
         let log_dir = app.path().app_log_dir()?;
-        let file_appender = tracing_appender::rolling::daily(&log_dir, "app.log");
+        let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
         // Store guard in Tauri state to keep file logging active
@@ -218,7 +218,7 @@ fn setup_logger() -> Builder {
     let log_dir = std::env::temp_dir().join("my-app");
     let _ = std::fs::create_dir_all(&log_dir);
 
-    let file_appender = tracing_appender::rolling::daily(&log_dir, "app.log");
+    let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
     std::mem::forget(guard); // Keep file logging active for app lifetime
 
