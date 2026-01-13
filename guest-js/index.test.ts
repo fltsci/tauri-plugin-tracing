@@ -1,48 +1,5 @@
 import { describe, it, expect } from 'vitest'
-
-// Re-implement formatPrintf for testing (since it's not exported)
-function getCircularReplacer() {
-  const ancestors: unknown[] = []
-  return function (_key: unknown, value: unknown) {
-    if (typeof value !== 'object' || value === null) {
-      return value
-    }
-    // @ts-expect-error -- this type is meant to be unknown
-    while (ancestors.length > 0 && ancestors.at(-1) !== this) {
-      ancestors.pop()
-    }
-    if (ancestors.includes(value)) {
-      return '[Circular]'
-    }
-    ancestors.push(value)
-    return value
-  }
-}
-
-function formatPrintf(format: string, args: unknown[]): [string, unknown[]] {
-  const remainingArgs = [...args]
-  const result = format.replace(/%([sdifooO%])/g, (match, specifier) => {
-    if (specifier === '%') return '%'
-    if (remainingArgs.length === 0) return match
-
-    const arg = remainingArgs.shift()
-    switch (specifier) {
-      case 's':
-        return String(arg)
-      case 'd':
-      case 'i':
-        return String(Math.floor(Number(arg)))
-      case 'f':
-        return String(Number(arg))
-      case 'o':
-      case 'O':
-        return JSON.stringify(arg, getCircularReplacer())
-      default:
-        return match
-    }
-  })
-  return [result, remainingArgs]
-}
+import { formatPrintf, getCircularReplacer } from './index'
 
 describe('formatPrintf', () => {
   it('handles %s string substitution', () => {
@@ -141,5 +98,40 @@ describe('formatPrintf', () => {
 
     const [result2] = formatPrintf('%o', [null])
     expect(result2).toBe('null')
+  })
+})
+
+describe('getCircularReplacer', () => {
+  it('handles non-circular objects', () => {
+    const obj = { a: 1, b: { c: 2 } }
+    const result = JSON.stringify(obj, getCircularReplacer())
+    expect(result).toBe('{"a":1,"b":{"c":2}}')
+  })
+
+  it('replaces circular references with [Circular]', () => {
+    const obj: Record<string, unknown> = { name: 'test' }
+    obj.self = obj
+    const result = JSON.stringify(obj, getCircularReplacer())
+    expect(result).toBe('{"name":"test","self":"[Circular]"}')
+  })
+
+  it('handles deeply nested circular references', () => {
+    type NestedObj = { a: { b: { c: unknown } } }
+    const obj: NestedObj = { a: { b: { c: {} } } }
+    obj.a.b.c = obj
+    const result = JSON.stringify(obj, getCircularReplacer())
+    expect(result).toBe('{"a":{"b":{"c":"[Circular]"}}}')
+  })
+
+  it('handles null values', () => {
+    const obj = { a: null, b: 1 }
+    const result = JSON.stringify(obj, getCircularReplacer())
+    expect(result).toBe('{"a":null,"b":1}')
+  })
+
+  it('handles arrays', () => {
+    const arr = [1, 2, { nested: true }]
+    const result = JSON.stringify(arr, getCircularReplacer())
+    expect(result).toBe('[1,2,{"nested":true}]')
   })
 })
