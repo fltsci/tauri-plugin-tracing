@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.13]
+
+- [`4fa8668`](https://github.com/fltsci/tauri-plugin-tracing/commit/4fa86684476164d57c217f0ae9bd19aaa6207d49) ([#68](https://github.com/fltsci/tauri-plugin-tracing/pull/68) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix documentation incorrectly stating file logging requires default subscriber. Add examples for custom subscriber file logging and early initialization patterns.
+
 ## \[0.2.0-canary.12]
 
 - [`db4978d`](https://github.com/fltsci/tauri-plugin-tracing/commit/db4978ddb3c0ba105d27cacd842dc33d2b3beafa) ([#64](https://github.com/fltsci/tauri-plugin-tracing/pull/64) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add `StripAnsiWriter` for stripping ANSI escape codes from file writers, and printf-style format expansion (%s, %d, %i, %f, %o, %O) in JS. `StripAnsiWriter` uses a zero-copy fast path with SIMD-accelerated ESC byte detection via memchr.

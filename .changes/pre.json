@@ -20,6 +20,7 @@
     ".changes/fine-tune-ci-workflows.md",
     ".changes/fix-doctests.md",
     ".changes/fix-empty-call-stack.md",
+    ".changes/fix-file-logging-docs.md",
     ".changes/inclue-window-name-in-tracing-logs.md",
     ".changes/move-to-github-packages.md",
     ".changes/patch-various-bugs.md",
