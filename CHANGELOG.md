@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.10]
+
+- [`4155d67`](https://github.com/fltsci/tauri-plugin-tracing/commit/4155d6762dac9d7084c5e4ef5e445b26a46f4e22) ([#60](https://github.com/fltsci/tauri-plugin-tracing/pull/60) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix doctests to be compile-checked instead of ignored, eliminating "this example is not tested" warnings.
+
 ## \[0.2.0-canary.9]
 
 - [`f364659`](https://github.com/fltsci/tauri-plugin-tracing/commit/f364659631d66e9e47b2fb3e1364222660483978) ([#58](https://github.com/fltsci/tauri-plugin-tracing/pull/58) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Rewrote README with comprehensive documentation including installation instructions, quick start guide, feature documentation with code examples, and JavaScript API reference.
