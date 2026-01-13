@@ -37,7 +37,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] `with_timezone_strategy()` - timestamp timezone (UTC or local)
 - [x] `with_format()` + format options - custom formatting
 - [x] `filter()` - metadata-based filtering
-- [ ] Custom tracing layers/targets
+- [x] `with_layer()` - add custom tracing layers
 
 ### Extra Features (not in tauri-plugin-log)
 
@@ -49,3 +49,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 ### Known Issues / Future Work
 
 - [x] ~~Find alternative to `set_global_default()`~~ - plugin no longer sets global by default; use `WebviewLayer` + `build_filter()` for custom setup, or `with_default_subscriber()` for convenience
+
+## Next Steps
+
+- [ ] Flamegraph integration (`flamegraph` feature)

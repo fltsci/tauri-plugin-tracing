@@ -110,6 +110,28 @@ use tracing_subscriber::{
 /// metadata and returns `true` if the log should be included.
 pub type FilterFn = Box<dyn Fn(&tracing::Metadata<'_>) -> bool + Send + Sync>;
 
+/// A boxed tracing layer that can be added to the default subscriber.
+///
+/// Use this type with [`Builder::with_layer()`] to add custom tracing layers
+/// (e.g., for OpenTelemetry, Sentry, or custom logging integrations) to the
+/// plugin-managed subscriber.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, BoxedLayer};
+/// use tracing_subscriber::Layer;
+///
+/// // Create a custom layer and box it
+/// let my_layer: BoxedLayer = my_custom_layer.boxed();
+///
+/// Builder::new()
+///     .with_layer(my_layer)
+///     .with_default_subscriber()
+///     .build()
+/// ```
+pub type BoxedLayer = Box<dyn Layer<Registry> + Send + Sync + 'static>;
+
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -760,6 +782,7 @@ pub struct Builder {
     log_level: LevelFilter,
     filter: Targets,
     custom_filter: Option<FilterFn>,
+    custom_layer: Option<BoxedLayer>,
     targets: Vec<Target>,
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
@@ -784,6 +807,7 @@ impl Default for Builder {
             log_level: LevelFilter::WARN,
             filter: Targets::default(),
             custom_filter: None,
+            custom_layer: None,
             targets: vec![Target::Stdout, Target::Webview],
             rotation: Rotation::default(),
             rotation_strategy: RotationStrategy::default(),
@@ -878,6 +902,36 @@ impl Builder {
         F: Fn(&tracing::Metadata<'_>) -> bool + Send + Sync + 'static,
     {
         self.custom_filter = Some(Box::new(filter));
+        self
+    }
+
+    /// Adds a custom tracing layer to the subscriber.
+    ///
+    /// Use this to integrate additional tracing functionality (e.g., OpenTelemetry,
+    /// Sentry, custom metrics) with the plugin-managed subscriber.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// Note: Only one custom layer is supported. Calling this multiple times will
+    /// replace the previous layer. To use multiple custom layers, compose them
+    /// with [`tracing_subscriber::layer::Layered`] before passing to this method.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::Builder;
+    /// use tracing_subscriber::Layer;
+    ///
+    /// // Add a custom layer (e.g., OpenTelemetry)
+    /// let otel_layer = tracing_opentelemetry::layer().boxed();
+    ///
+    /// Builder::new()
+    ///     .with_layer(otel_layer)
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    pub fn with_layer(mut self, layer: BoxedLayer) -> Self {
+        self.custom_layer = Some(layer);
         self
     }
 
@@ -1373,6 +1427,7 @@ impl Builder {
         let log_level = self.log_level;
         let filter = self.filter;
         let custom_filter = self.custom_filter;
+        let custom_layer = self.custom_layer;
         let targets = self.targets;
         let rotation = self.rotation;
         let rotation_strategy = self.rotation_strategy;
@@ -1404,6 +1459,7 @@ impl Builder {
                         log_level,
                         filter,
                         custom_filter,
+                        custom_layer,
                         &targets,
                         rotation,
                         rotation_strategy,
@@ -1511,6 +1567,7 @@ fn acquire_logger<R: Runtime>(
     log_level: LevelFilter,
     filter: Targets,
     custom_filter: Option<FilterFn>,
+    custom_layer: Option<BoxedLayer>,
     targets: &[Target],
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
@@ -1696,7 +1753,9 @@ fn acquire_logger<R: Runtime>(
     let custom_filter_layer = custom_filter.map(|f| filter_fn(move |metadata| f(metadata)));
 
     // Compose the subscriber with all optional layers
+    // Note: custom_layer must be added first because it's typed as Layer<Registry>
     let subscriber = Registry::default()
+        .with(custom_layer)
         .with(stdout_layer)
         .with(stderr_layer)
         .with(file_layer)
