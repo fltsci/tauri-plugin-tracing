@@ -49,3 +49,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 ### Known Issues / Future Work
 
 - [x] ~~Find alternative to `set_global_default()`~~ - plugin no longer sets global by default; use `WebviewLayer` + `build_filter()` for custom setup, or `with_default_subscriber()` for convenience
+
+## Next Steps
+
+- [ ] Flamegraph integration (`flamegraph` feature)
