@@ -15,7 +15,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] Custom folder logging
 - [x] Log rotation (KeepAll, KeepOne, KeepSome)
 - [x] Max file size configuration
-- [ ] Timezone configuration (UTC/local)
+- [x] Timezone configuration (UTC/local)
 
 ### JavaScript API
 
@@ -34,7 +34,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] `with_rotation_strategy()` - file retention policy
 - [x] `targets()` / `target()` / `clear_targets()` - configure log destinations (Stdout, Stderr, Webview, LogDir, Folder)
 - [x] `with_max_file_size()` - size-based rotation threshold
-- [ ] `timezone_strategy()` - timestamp timezone
+- [x] `with_timezone_strategy()` - timestamp timezone (UTC or local)
 - [ ] `format()` / `clear_format()` - custom formatting
 - [ ] `filter()` - metadata-based filtering
 - [ ] Custom tracing layers/targets
