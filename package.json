@@ -30,6 +30,7 @@
     "pretest": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest bench",
     "lint": "biome lint --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

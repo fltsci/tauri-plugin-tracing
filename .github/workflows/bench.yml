@@ -1,0 +1,87 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run weekly on Mondays at 6am UTC
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SCCACHE_GHA_ENABLED: 'true'
+  RUSTC_WRAPPER: 'sccache'
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-bench:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@v4
+
+      - name: install webkit2gtk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run Rust benchmarks
+        run: cargo bench --all-features -- --output-format bencher | tee rust-bench-output.txt
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Rust Benchmarks
+          tool: 'cargo'
+          output-file-path: rust-bench-output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: true
+          alert-comment-cc-users: '@fltsci/tauri-plugin-tracing'
+
+  js-bench:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm i --frozen-lockfile
+
+      - name: Run JavaScript benchmarks
+        run: pnpm bench --reporter=json > js-bench-output.json
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: JavaScript Benchmarks
+          tool: 'customSmallerIsBetter'
+          output-file-path: js-bench-output.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: true
+          alert-comment-cc-users: '@fltsci/tauri-plugin-tracing'
