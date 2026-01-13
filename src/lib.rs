@@ -1086,9 +1086,8 @@ fn acquire_logger<R: Runtime>(
     // Determine if ANSI should be enabled.
     // When file logging is enabled, disable ANSI on all layers because
     // tracing-subscriber shares span field formatting between layers.
-    let has_file = file_config.is_some();
     #[cfg(feature = "colored")]
-    let use_ansi = use_colors && !has_file;
+    let use_ansi = use_colors && file_config.is_none();
     #[cfg(not(feature = "colored"))]
     let use_ansi = false;
 
