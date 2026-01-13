@@ -1890,3 +1890,107 @@ fn acquire_logger<R: Runtime>(
     tracing::info!("tracing initialized");
     Ok(guard)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tracing_subscriber::fmt::MakeWriter;
+
+    #[test]
+    fn strip_ansi_fast_path_no_escape() {
+        let mut output = Vec::new();
+        let input = b"Hello, world!";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, input);
+    }
+
+    #[test]
+    fn strip_ansi_removes_sgr_sequence() {
+        let mut output = Vec::new();
+        let input = b"\x1b[32mgreen\x1b[0m";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, b"green");
+    }
+
+    #[test]
+    fn strip_ansi_removes_multiple_sequences() {
+        let mut output = Vec::new();
+        let input = b"\x1b[1m\x1b[31mBold Red\x1b[0m Normal";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, b"Bold Red Normal");
+    }
+
+    #[test]
+    fn strip_ansi_handles_complex_sgr() {
+        let mut output = Vec::new();
+        // SGR with multiple parameters: ESC[1;31;42m
+        let input = b"\x1b[1;31;42mStyled\x1b[0m";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, b"Styled");
+    }
+
+    #[test]
+    fn strip_ansi_preserves_non_sgr_escape() {
+        let mut output = Vec::new();
+        // ESC not followed by [ should be preserved
+        let input = b"Hello\x1bWorld";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, b"Hello\x1bWorld");
+    }
+
+    #[test]
+    fn strip_ansi_handles_escape_at_end() {
+        let mut output = Vec::new();
+        let input = b"Hello\x1b";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, b"Hello\x1b");
+    }
+
+    #[test]
+    fn strip_ansi_handles_incomplete_sequence() {
+        let mut output = Vec::new();
+        // ESC[ without terminator
+        let input = b"Hello\x1b[31";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        // Incomplete sequence is stripped up to where parsing stops
+        assert_eq!(output, b"Hello");
+    }
+
+    #[test]
+    fn strip_ansi_writer_works() {
+        let inner = Vec::new();
+        let writer = StripAnsiWriter::new(inner);
+        {
+            let mut guard = writer.make_writer();
+            guard.write_all(b"\x1b[32mtest\x1b[0m").unwrap();
+        }
+        let result = writer.inner.lock().unwrap();
+        assert_eq!(&*result, b"test");
+    }
+
+    #[test]
+    fn strip_ansi_empty_input() {
+        let mut output = Vec::new();
+        let input = b"";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, 0);
+        assert_eq!(output, b"");
+    }
+
+    #[test]
+    fn strip_ansi_only_escape_sequences() {
+        let mut output = Vec::new();
+        let input = b"\x1b[31m\x1b[0m";
+        let written = strip_ansi_and_write(&mut output, input).unwrap();
+        assert_eq!(written, input.len());
+        assert_eq!(output, b"");
+    }
+}
