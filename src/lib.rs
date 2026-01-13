@@ -100,6 +100,54 @@
 //! - **Linux**: `~/.local/share/{bundle_identifier}/logs/app.YYYY-MM-DD.log`
 //! - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs/app.YYYY-MM-DD.log`
 //!
+//! ## Early Initialization
+//!
+//! For maximum control, initialize tracing before creating the Tauri app. This
+//! pattern uses [`tracing_subscriber::registry()`] with [`try_init()`](tracing_subscriber::util::SubscriberInitExt::try_init)
+//! and passes a minimal [`Builder`] to the plugin:
+//!
+//! ```rust,no_run
+//! use tauri_plugin_tracing::{Builder, StripAnsiWriter, tracing_appender};
+//! use tracing::Level;
+//! use tracing_subscriber::filter::Targets;
+//! use tracing_subscriber::layer::SubscriberExt;
+//! use tracing_subscriber::util::SubscriberInitExt;
+//! use tracing_subscriber::{fmt, registry};
+//!
+//! fn setup_logger() -> Builder {
+//!     let log_dir = std::env::temp_dir().join("my-app");
+//!     let _ = std::fs::create_dir_all(&log_dir);
+//!
+//!     let file_appender = tracing_appender::rolling::daily(&log_dir, "app.log");
+//!     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+//!     std::mem::forget(guard); // Keep file logging active for app lifetime
+//!
+//!     let targets = Targets::new()
+//!         .with_default(Level::DEBUG)
+//!         .with_target("hyper", Level::WARN)
+//!         .with_target("reqwest", Level::WARN);
+//!
+//!     registry()
+//!         .with(fmt::layer().with_ansi(true))
+//!         .with(fmt::layer().with_writer(StripAnsiWriter::new(non_blocking)).with_ansi(false))
+//!         .with(targets)
+//!         .init();
+//!
+//!     // Return minimal builder - logging is already configured
+//!     Builder::new()
+//! }
+//!
+//! fn main() {
+//!     let builder = setup_logger();
+//!     tauri::Builder::default()
+//!         .plugin(builder.build());
+//!         // .run(tauri::generate_context!())
+//! }
+//! ```
+//!
+//! This approach is useful when you need logging available before Tauri starts,
+//! or when you want full control over the subscriber configuration.
+//!
 //! ## JavaScript API
 //!
 //! ```javascript
