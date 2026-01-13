@@ -39,3 +39,6 @@ export { attachLogger, attachConsole } from './listener'
 
 // Re-export utilities (for testing and advanced usage)
 export { formatPrintf, getCircularReplacer } from './utils'
+
+// Re-export flamegraph functions
+export { generateFlamegraph, generateFlamechart } from './flamegraph'

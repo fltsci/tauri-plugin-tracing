@@ -56,6 +56,7 @@ error('Something went wrong');
 - **`colored`** - ANSI color output in terminal
 - **`specta`** - TypeScript type generation
 - **`timing`** - Performance timing with `time()` / `timeEnd()`
+- **`flamegraph`** - Performance profiling with flamegraph/flamechart generation
 
 ### Log Targets
 
@@ -139,6 +140,27 @@ import { time, timeEnd } from '@fltsci/tauri-plugin-tracing';
 time('database-query');
 const results = await db.query('SELECT * FROM users');
 timeEnd('database-query');  // Logs: "database-query: 42.123ms"
+```
+
+### Performance Profiling
+
+Requires the `flamegraph` feature.
+
+```rust
+Builder::new()
+    .with_flamegraph()
+    .with_default_subscriber()
+    .build()
+```
+
+```typescript
+import { generateFlamegraph, generateFlamechart } from '@fltsci/tauri-plugin-tracing';
+
+// Generate a flamegraph (collapses identical stack frames)
+const flamegraphPath = await generateFlamegraph();
+
+// Generate a flamechart (preserves event ordering)
+const flamechartPath = await generateFlamechart();
 ```
 
 ## Custom Subscriber Setup

@@ -24,6 +24,7 @@ tauri-plugin-tracing = { path = "../../../", features = [
   "colored",
   "specta",
   "timing",
+  "flamegraph",
 ] }
 
 [dev-dependencies]

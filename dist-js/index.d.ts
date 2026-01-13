@@ -24,3 +24,4 @@ export { trace, debug, info, warn, error } from './log';
 export { time, timeEnd } from './timing';
 export { attachLogger, attachConsole } from './listener';
 export { formatPrintf, getCircularReplacer } from './utils';
+export { generateFlamegraph, generateFlamechart } from './flamegraph';

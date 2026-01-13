@@ -7,7 +7,7 @@ use tracing::Level;
 
 #[cfg(feature = "timing")]
 use crate::LoggerExt;
-#[cfg(feature = "timing")]
+#[cfg(any(feature = "timing", feature = "flamegraph"))]
 use tauri::AppHandle;
 
 #[tauri::command]
@@ -66,4 +66,61 @@ pub async fn time_end<R: Runtime>(
     // Namespace timer by window label to prevent cross-window interference
     let key = format!("{}:{}", window.label(), label);
     app.time_end(key.to_compact_string(), call_stack).await;
+}
+
+/// Generates a flamegraph SVG from the recorded profiling data.
+///
+/// Returns the path to the generated SVG file.
+#[cfg(feature = "flamegraph")]
+#[tauri::command]
+pub async fn generate_flamegraph<R: Runtime>(app: AppHandle<R>) -> crate::Result<String> {
+    use crate::flamegraph::{FlameState, generate_flamegraph_svg};
+    use tauri::Manager;
+
+    let state = app.state::<FlameState>();
+    let path_lock = state.folded_path.lock().await;
+
+    let folded_path = path_lock
+        .as_ref()
+        .ok_or_else(|| crate::Error::Io(std::io::Error::other("No profiling data available")))?;
+
+    // Flush the guard to ensure all data is written
+    {
+        let mut guard_lock = state.guard.lock().await;
+        if let Some(guard) = guard_lock.take() {
+            drop(guard);
+        }
+    }
+
+    let svg_path = generate_flamegraph_svg(folded_path)?;
+    Ok(svg_path.to_string_lossy().to_string())
+}
+
+/// Generates a flamechart SVG from the recorded profiling data.
+///
+/// Unlike flamegraphs, flamecharts preserve the exact ordering of events.
+/// Returns the path to the generated SVG file.
+#[cfg(feature = "flamegraph")]
+#[tauri::command]
+pub async fn generate_flamechart<R: Runtime>(app: AppHandle<R>) -> crate::Result<String> {
+    use crate::flamegraph::{FlameState, generate_flamechart_svg};
+    use tauri::Manager;
+
+    let state = app.state::<FlameState>();
+    let path_lock = state.folded_path.lock().await;
+
+    let folded_path = path_lock
+        .as_ref()
+        .ok_or_else(|| crate::Error::Io(std::io::Error::other("No profiling data available")))?;
+
+    // Flush the guard to ensure all data is written
+    {
+        let mut guard_lock = state.guard.lock().await;
+        if let Some(guard) = guard_lock.take() {
+            drop(guard);
+        }
+    }
+
+    let svg_path = generate_flamechart_svg(folded_path)?;
+    Ok(svg_path.to_string_lossy().to_string())
 }
