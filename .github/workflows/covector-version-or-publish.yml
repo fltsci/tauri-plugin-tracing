@@ -70,8 +70,37 @@ jobs:
       - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
         run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
 
-      - name: 'ran covector ${{ steps.covector.outputs.commandRan }}'
-        run: echo "ran command 'covector ${{ steps.covector.outputs.commandRan }}'"
+      - name: Upload docs to Kellnr
+        if: steps.covector.outputs.commandRan == 'publish' && steps.covector.outputs.successfulPublish == 'true'
+        env:
+          KELLNR_DOCS_TOKEN: ${{ secrets.KELLNR_DOCS_TOKEN }}
+          CARGO_TARGET_DIR: /mnt/target
+        run: |
+          # Install Tauri dependencies
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+          # Build docs
+          cargo doc --package tauri-plugin-tracing --all-features --no-deps
+
+          # Extract version from Cargo.toml
+          VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+
+          # Create minimal docs archive
+          cd /mnt/target
+          zip -r doc.zip \
+            doc/tauri_plugin_tracing \
+            doc/static.files \
+            doc/src/tauri_plugin_tracing \
+            doc/help.html \
+            doc/settings.html \
+            doc/crates.js \
+            doc/src-files.js
+
+          # Upload to Kellnr
+          curl -f -H "Authorization: $KELLNR_DOCS_TOKEN" \
+            "https://crates.newearth.llc/api/v1/docs/tauri-plugin-tracing/$VERSION" \
+            --upload-file doc.zip
 
       - name: Sync Cargo.lock
         if: steps.covector.outputs.commandRan == 'version'
