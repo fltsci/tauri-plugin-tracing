@@ -152,7 +152,7 @@ pub use tracing_subscriber;
 pub use tracing_subscriber::filter::LevelFilter;
 
 use serde::ser::Serializer;
-use tracing::{Level, instrument};
+use tracing::Level;
 
 #[cfg(target_os = "ios")]
 mod ios {
@@ -211,30 +211,75 @@ impl Serialize for Error {
     }
 }
 
-/// Specifies where log files should be written.
+/// Specifies a log output destination.
+///
+/// Use these variants to configure where logs should be written. Multiple
+/// targets can be combined using [`Builder::target()`] or [`Builder::targets()`].
 ///
 /// # Example
 ///
 /// ```rust,ignore
-/// use tauri_plugin_tracing::{Builder, LogTarget};
+/// use tauri_plugin_tracing::{Builder, Target};
 /// use std::path::PathBuf;
 ///
-/// // Use platform default (e.g., ~/Library/Logs/{bundle_id} on macOS)
-/// Builder::new().with_log_dir(LogTarget::LogDir);
+/// // Log to stdout and webview (default behavior)
+/// Builder::new()
+///     .targets([Target::Stdout, Target::Webview])
+///     .build();
 ///
-/// // Use a custom directory
-/// Builder::new().with_log_dir(LogTarget::Folder(PathBuf::from("/var/log/myapp")));
+/// // Log to file and webview only (no console)
+/// Builder::new()
+///     .targets([
+///         Target::LogDir { file_name: None },
+///         Target::Webview,
+///     ])
+///     .build();
+///
+/// // Log to stderr instead of stdout
+/// Builder::new()
+///     .clear_targets()
+///     .target(Target::Stderr)
+///     .target(Target::Webview)
+///     .build();
 /// ```
 #[derive(Debug, Clone)]
-pub enum LogTarget {
-    /// Use the platform-standard log directory.
+pub enum Target {
+    /// Print logs to stdout.
+    Stdout,
+
+    /// Print logs to stderr.
+    Stderr,
+
+    /// Forward logs to the webview via the `tracing://log` event.
+    ///
+    /// This allows JavaScript code to receive logs using `attachLogger()`
+    /// or `attachConsole()`.
+    Webview,
+
+    /// Write logs to the platform-standard log directory.
+    ///
+    /// Platform log directories:
     /// - **macOS**: `~/Library/Logs/{bundle_identifier}`
     /// - **Linux**: `~/.local/share/{bundle_identifier}/logs`
     /// - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs`
-    LogDir,
+    ///
+    /// The `file_name` parameter sets the log file prefix. Defaults to `"app"`
+    /// if `None`, producing files like `app.2024-01-15.log`.
+    LogDir {
+        /// The log file prefix. Defaults to `"app"` if `None`.
+        file_name: Option<String>,
+    },
 
-    /// Use a custom directory path.
-    Folder(PathBuf),
+    /// Write logs to a custom directory.
+    ///
+    /// The `file_name` parameter sets the log file prefix. Defaults to `"app"`
+    /// if `None`, producing files like `app.2024-01-15.log`.
+    Folder {
+        /// The directory path to write log files to.
+        path: PathBuf,
+        /// The log file prefix. Defaults to `"app"` if `None`.
+        file_name: Option<String>,
+    },
 }
 
 /// Time-based rotation period for log files.
@@ -558,7 +603,7 @@ pub struct Builder {
     builder: SubscriberBuilder,
     log_level: LevelFilter,
     filter: Targets,
-    file_log: Option<LogTarget>,
+    targets: Vec<Target>,
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
     set_default_subscriber: bool,
@@ -572,7 +617,7 @@ impl Default for Builder {
             builder: SubscriberBuilder::default(),
             log_level: LevelFilter::WARN,
             filter: Targets::default(),
-            file_log: None,
+            targets: vec![Target::Stdout, Target::Webview],
             rotation: Rotation::default(),
             rotation_strategy: RotationStrategy::default(),
             set_default_subscriber: false,
@@ -627,6 +672,7 @@ impl Builder {
     ///
     /// This adds ANSI color codes to log level indicators.
     /// Only available when the `colored` feature is enabled.
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
     #[cfg(feature = "colored")]
     pub fn with_colors(mut self) -> Self {
         self.builder = self.builder.with_ansi(true);
@@ -643,6 +689,9 @@ impl Builder {
     /// - **Linux**: `~/.local/share/{bundle_identifier}/logs`
     /// - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs`
     ///
+    /// This is a convenience method equivalent to calling
+    /// `.target(Target::LogDir { file_name: None })`.
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -651,32 +700,8 @@ impl Builder {
     ///     .with_file_logging()
     ///     .build()
     /// ```
-    pub fn with_file_logging(mut self) -> Self {
-        self.file_log = Some(LogTarget::LogDir);
-        self
-    }
-
-    /// Enables file logging to a specific directory or the platform default.
-    ///
-    /// # Arguments
-    ///
-    /// * `target` - The log target directory configuration
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use std::path::PathBuf;
-    /// use tauri_plugin_tracing::{Builder, LogTarget};
-    ///
-    /// // Platform default
-    /// Builder::new().with_log_dir(LogTarget::LogDir);
-    ///
-    /// // Custom directory
-    /// Builder::new().with_log_dir(LogTarget::Folder(PathBuf::from("/var/log/myapp")));
-    /// ```
-    pub fn with_log_dir(mut self, target: LogTarget) -> Self {
-        self.file_log = Some(target);
-        self
+    pub fn with_file_logging(self) -> Self {
+        self.target(Target::LogDir { file_name: None })
     }
 
     /// Sets the rotation period for log files.
@@ -719,6 +744,75 @@ impl Builder {
         self
     }
 
+    /// Adds a log output target.
+    ///
+    /// By default, logs are sent to [`Target::Stdout`] and [`Target::Webview`].
+    /// Use this method to add additional targets.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, Target};
+    ///
+    /// // Add file logging to the default targets
+    /// Builder::new()
+    ///     .target(Target::LogDir { file_name: None })
+    ///     .build();
+    /// ```
+    pub fn target(mut self, target: Target) -> Self {
+        self.targets.push(target);
+        self
+    }
+
+    /// Sets the log output targets, replacing any previously configured targets.
+    ///
+    /// By default, logs are sent to [`Target::Stdout`] and [`Target::Webview`].
+    /// Use this method to completely replace the default targets.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, Target};
+    ///
+    /// // Log only to file and webview (no stdout)
+    /// Builder::new()
+    ///     .targets([
+    ///         Target::LogDir { file_name: None },
+    ///         Target::Webview,
+    ///     ])
+    ///     .build();
+    ///
+    /// // Log only to stderr
+    /// Builder::new()
+    ///     .targets([Target::Stderr])
+    ///     .build();
+    /// ```
+    pub fn targets(mut self, targets: impl IntoIterator<Item = Target>) -> Self {
+        self.targets = targets.into_iter().collect();
+        self
+    }
+
+    /// Removes all configured log targets.
+    ///
+    /// Use this followed by [`target()`](Self::target) to build a custom set
+    /// of targets from scratch.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, Target};
+    ///
+    /// // Start fresh and only log to webview
+    /// Builder::new()
+    ///     .clear_targets()
+    ///     .target(Target::Webview)
+    ///     .build();
+    /// ```
+    pub fn clear_targets(mut self) -> Self {
+        self.targets.clear();
+        self
+    }
+
     /// Enables the plugin to set up and register the global tracing subscriber.
     ///
     /// By default, this plugin does **not** call [`tracing::subscriber::set_global_default()`],
@@ -748,6 +842,42 @@ impl Builder {
     pub fn with_default_subscriber(mut self) -> Self {
         self.set_default_subscriber = true;
         self
+    }
+
+    /// Returns the configured log output targets.
+    ///
+    /// Use this when setting up your own subscriber to determine which
+    /// layers to include based on the configured targets.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, Target};
+    ///
+    /// let builder = Builder::new()
+    ///     .target(Target::LogDir { file_name: None });
+    ///
+    /// for target in builder.configured_targets() {
+    ///     match target {
+    ///         Target::Stdout => { /* add stdout layer */ }
+    ///         Target::Stderr => { /* add stderr layer */ }
+    ///         Target::Webview => { /* add WebviewLayer */ }
+    ///         Target::LogDir { .. } | Target::Folder { .. } => { /* add file layer */ }
+    ///     }
+    /// }
+    /// ```
+    pub fn configured_targets(&self) -> &[Target] {
+        &self.targets
+    }
+
+    /// Returns the configured rotation period for file logging.
+    pub fn configured_rotation(&self) -> Rotation {
+        self.rotation
+    }
+
+    /// Returns the configured rotation strategy for file logging.
+    pub fn configured_rotation_strategy(&self) -> RotationStrategy {
+        self.rotation_strategy
     }
 
     /// Returns the configured filter based on log level and per-target settings.
@@ -812,7 +942,7 @@ impl Builder {
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
         let log_level = self.log_level;
         let filter = self.filter;
-        let file_log = self.file_log;
+        let targets = self.targets;
         let rotation = self.rotation;
         let rotation_strategy = self.rotation_strategy;
         let set_default_subscriber = self.set_default_subscriber;
@@ -831,7 +961,7 @@ impl Builder {
                         app,
                         log_level,
                         filter,
-                        file_log,
+                        &targets,
                         rotation,
                         rotation_strategy,
                         #[cfg(feature = "colored")]
@@ -857,48 +987,60 @@ fn setup_timings<R: Runtime>(app: &AppHandle<R>) {
     app.manage(timings);
 }
 
-/// Resolves the log directory path based on the target configuration.
-fn resolve_log_dir<R: Runtime>(app_handle: &AppHandle<R>, target: &LogTarget) -> Result<PathBuf> {
+/// Configuration for a file logging target.
+struct FileTargetConfig {
+    log_dir: PathBuf,
+    file_name: String,
+}
+
+/// Resolves file target configuration from a Target.
+fn resolve_file_target<R: Runtime>(
+    app_handle: &AppHandle<R>,
+    target: &Target,
+) -> Result<Option<FileTargetConfig>> {
     match target {
-        LogTarget::LogDir => {
+        Target::LogDir { file_name } => {
             let log_dir = app_handle.path().app_log_dir()?;
             std::fs::create_dir_all(&log_dir)?;
-            Ok(log_dir)
+            Ok(Some(FileTargetConfig {
+                log_dir,
+                file_name: file_name.clone().unwrap_or_else(|| "app".to_string()),
+            }))
         }
-        LogTarget::Folder(path) => {
+        Target::Folder { path, file_name } => {
             std::fs::create_dir_all(path)?;
-            Ok(path.clone())
+            Ok(Some(FileTargetConfig {
+                log_dir: path.clone(),
+                file_name: file_name.clone().unwrap_or_else(|| "app".to_string()),
+            }))
         }
+        _ => Ok(None),
     }
 }
 
 /// Cleans up old log files based on the retention strategy.
-fn cleanup_old_logs(log_dir: &std::path::Path, strategy: RotationStrategy) -> Result<()> {
+fn cleanup_old_logs(
+    log_dir: &std::path::Path,
+    file_prefix: &str,
+    strategy: RotationStrategy,
+) -> Result<()> {
     match strategy {
-        RotationStrategy::KeepAll => {
-            // Nothing to do
-            Ok(())
-        }
-        RotationStrategy::KeepOne => {
-            // Delete all log files except the most recent
-            cleanup_logs_keeping(log_dir, 1)
-        }
-        RotationStrategy::KeepSome(n) => {
-            // Keep n most recent log files
-            cleanup_logs_keeping(log_dir, n as usize)
-        }
+        RotationStrategy::KeepAll => Ok(()),
+        RotationStrategy::KeepOne => cleanup_logs_keeping(log_dir, file_prefix, 1),
+        RotationStrategy::KeepSome(n) => cleanup_logs_keeping(log_dir, file_prefix, n as usize),
     }
 }
 
 /// Helper to delete old log files, keeping only the most recent `keep` files.
-fn cleanup_logs_keeping(log_dir: &std::path::Path, keep: usize) -> Result<()> {
+fn cleanup_logs_keeping(log_dir: &std::path::Path, file_prefix: &str, keep: usize) -> Result<()> {
+    let prefix_with_dot = format!("{}.", file_prefix);
     let mut log_files: Vec<_> = std::fs::read_dir(log_dir)?
         .filter_map(|entry| entry.ok())
         .filter(|entry| {
             entry
                 .file_name()
                 .to_str()
-                .is_some_and(|name| name.starts_with("app.") && name.ends_with(".log"))
+                .is_some_and(|name| name.starts_with(&prefix_with_dot) && name.ends_with(".log"))
         })
         .collect();
 
@@ -908,7 +1050,6 @@ fn cleanup_logs_keeping(log_dir: &std::path::Path, keep: usize) -> Result<()> {
     // Delete all but the most recent `keep` files
     for entry in log_files.into_iter().skip(keep) {
         if let Err(e) = std::fs::remove_file(entry.path()) {
-            // Log but don't fail - best effort cleanup
             tracing::warn!("Failed to remove old log file {:?}: {}", entry.path(), e);
         }
     }
@@ -916,79 +1057,100 @@ fn cleanup_logs_keeping(log_dir: &std::path::Path, keep: usize) -> Result<()> {
     Ok(())
 }
 
-/// Sets up the tracing subscriber with console output and optional file logging.
-#[instrument(skip_all)]
+/// Sets up the tracing subscriber based on configured targets.
+#[cfg(desktop)]
 fn acquire_logger<R: Runtime>(
     app_handle: &AppHandle<R>,
     log_level: LevelFilter,
     filter: Targets,
-    file_log: Option<LogTarget>,
+    targets: &[Target],
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
     #[cfg(feature = "colored")] use_colors: bool,
 ) -> Result<Option<WorkerGuard>> {
+    use std::io;
+
     let filter_with_default = filter.with_default(log_level);
-    let webview_layer = WebviewLayer::new(app_handle.clone());
 
-    // Set up subscriber with or without file logging
-    let guard = if let Some(target) = file_log {
-        let log_dir = resolve_log_dir(app_handle, &target)?;
+    // Determine which targets are enabled
+    let has_stdout = targets.iter().any(|t| matches!(t, Target::Stdout));
+    let has_stderr = targets.iter().any(|t| matches!(t, Target::Stderr));
+    let has_webview = targets.iter().any(|t| matches!(t, Target::Webview));
 
-        // Clean up old log files based on retention strategy
-        cleanup_old_logs(&log_dir, rotation_strategy)?;
+    // Find file target (only first one is used)
+    let file_config = targets
+        .iter()
+        .find_map(|t| resolve_file_target(app_handle, t).transpose())
+        .transpose()?;
 
-        // Create rolling file appender based on rotation period
+    // Determine if ANSI should be enabled.
+    // When file logging is enabled, disable ANSI on all layers because
+    // tracing-subscriber shares span field formatting between layers.
+    let has_file = file_config.is_some();
+    #[cfg(feature = "colored")]
+    let use_ansi = use_colors && !has_file;
+    #[cfg(not(feature = "colored"))]
+    let use_ansi = false;
+
+    // Create optional layers based on targets
+    let stdout_layer = if has_stdout {
+        Some(fmt::layer().with_ansi(use_ansi).with_target(true))
+    } else {
+        None
+    };
+
+    let stderr_layer = if has_stderr {
+        Some(
+            fmt::layer()
+                .with_ansi(use_ansi)
+                .with_target(true)
+                .with_writer(io::stderr),
+        )
+    } else {
+        None
+    };
+
+    let webview_layer = if has_webview {
+        Some(WebviewLayer::new(app_handle.clone()))
+    } else {
+        None
+    };
+
+    // Set up file logging if configured
+    let (file_layer, guard) = if let Some(config) = file_config {
+        cleanup_old_logs(&config.log_dir, &config.file_name, rotation_strategy)?;
+
         let file_appender = match rotation {
-            Rotation::Daily => tracing_appender::rolling::daily(&log_dir, "app"),
-            Rotation::Hourly => tracing_appender::rolling::hourly(&log_dir, "app"),
-            Rotation::Minutely => tracing_appender::rolling::minutely(&log_dir, "app"),
-            Rotation::Never => tracing_appender::rolling::never(&log_dir, "app"),
+            Rotation::Daily => tracing_appender::rolling::daily(&config.log_dir, &config.file_name),
+            Rotation::Hourly => {
+                tracing_appender::rolling::hourly(&config.log_dir, &config.file_name)
+            }
+            Rotation::Minutely => {
+                tracing_appender::rolling::minutely(&config.log_dir, &config.file_name)
+            }
+            Rotation::Never => tracing_appender::rolling::never(&config.log_dir, &config.file_name),
         };
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
-        // When file logging is enabled, disable ANSI on both layers.
-        // This is because tracing-subscriber shares span field formatting between layers,
-        // so ANSI codes from the console layer would appear in file output.
-        let console_layer = fmt::layer().with_ansi(false).with_target(true);
-
-        let file_layer = fmt::layer()
+        let layer = fmt::layer()
             .with_ansi(false)
             .with_target(true)
             .with_writer(non_blocking);
 
-        let subscriber = Registry::default()
-            .with(console_layer)
-            .with(file_layer)
-            .with(webview_layer)
-            .with(filter_with_default);
-
-        tracing::subscriber::set_global_default(subscriber)?;
-        Some(guard)
+        (Some(layer), Some(guard))
     } else {
-        // Console-only: use colors if enabled
-        #[cfg(feature = "colored")]
-        let console_layer = fmt::layer().with_ansi(use_colors).with_target(true);
-
-        #[cfg(not(feature = "colored"))]
-        let console_layer = fmt::layer().with_ansi(false).with_target(true);
-
-        let subscriber = Registry::default()
-            .with(console_layer)
-            .with(webview_layer)
-            .with(filter_with_default);
-
-        tracing::subscriber::set_global_default(subscriber)?;
-        None
+        (None, None)
     };
 
+    // Compose the subscriber with all optional layers
+    let subscriber = Registry::default()
+        .with(stdout_layer)
+        .with(stderr_layer)
+        .with(file_layer)
+        .with(webview_layer)
+        .with(filter_with_default);
+
+    tracing::subscriber::set_global_default(subscriber)?;
     tracing::info!("tracing initialized");
     Ok(guard)
-}
-
-fn _rename_file_to_dated() -> Result<()> {
-    Err(Error::NotImplemented)
-}
-
-fn _get_log_file_path() -> Result<PathBuf> {
-    Err(Error::NotImplemented)
 }

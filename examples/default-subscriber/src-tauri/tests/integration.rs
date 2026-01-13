@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 use tauri_plugin_tracing::{
-    Builder, CallStack, CallStackLine, LevelFilter, LogLevel, LogTarget, Rotation, RotationStrategy,
+    Builder, CallStack, CallStackLine, LevelFilter, LogLevel, Rotation, RotationStrategy, Target,
 };
 
 #[test]
@@ -40,7 +40,7 @@ fn builder_with_colors() {
 
 #[test]
 fn builder_full_configuration() {
-    // Test a fully configured builder like the example app uses
+    // Test a fully configured builder
     let _plugin = Builder::new()
         .with_colors()
         .with_max_level(LevelFilter::TRACE)
@@ -183,20 +183,53 @@ fn builder_with_file_logging() {
 }
 
 #[test]
-fn builder_with_log_dir_platform_default() {
+fn builder_with_target_log_dir() {
     // Test with explicit LogDir target
     let _plugin = Builder::new()
         .with_max_level(LevelFilter::DEBUG)
-        .with_log_dir(LogTarget::LogDir)
+        .target(Target::LogDir { file_name: None })
         .build::<tauri::Wry>();
 }
 
 #[test]
-fn builder_with_log_dir_custom_folder() {
+fn builder_with_target_custom_folder() {
     // Test with custom folder target
     let _plugin = Builder::new()
         .with_max_level(LevelFilter::DEBUG)
-        .with_log_dir(LogTarget::Folder(PathBuf::from("/tmp/test-logs")))
+        .target(Target::Folder {
+            path: PathBuf::from("/tmp/test-logs"),
+            file_name: None,
+        })
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_targets_replace() {
+    // Test replacing default targets
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .targets([Target::Stderr, Target::Webview])
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_clear_targets() {
+    // Test clearing and rebuilding targets
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .clear_targets()
+        .target(Target::Webview)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_custom_file_name() {
+    // Test file logging with custom file name prefix
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .target(Target::LogDir {
+            file_name: Some("my-app".to_string()),
+        })
         .build::<tauri::Wry>();
 }
 
@@ -257,15 +290,42 @@ fn builder_with_rotation_strategy() {
 
 #[test]
 fn builder_full_rotation_configuration() {
-    // Test full configuration like the example app
+    // Test full configuration
     let _plugin = Builder::new()
-        .with_colors()
         .with_max_level(LevelFilter::TRACE)
         .with_target("tao::platform_impl", LevelFilter::WARN)
         .with_file_logging()
         .with_rotation(Rotation::Daily)
         .with_rotation_strategy(RotationStrategy::KeepSome(7))
         .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_configured_targets() {
+    // Test querying configured targets
+    let builder = Builder::new().target(Target::LogDir { file_name: None });
+
+    let targets = builder.configured_targets();
+    assert_eq!(targets.len(), 3); // Stdout, Webview (defaults) + LogDir
+}
+
+#[test]
+fn builder_configured_rotation() {
+    // Test querying configured rotation
+    let builder = Builder::new().with_rotation(Rotation::Hourly);
+
+    assert!(matches!(builder.configured_rotation(), Rotation::Hourly));
+}
+
+#[test]
+fn builder_configured_rotation_strategy() {
+    // Test querying configured rotation strategy
+    let builder = Builder::new().with_rotation_strategy(RotationStrategy::KeepSome(5));
+
+    assert!(matches!(
+        builder.configured_rotation_strategy(),
+        RotationStrategy::KeepSome(5)
+    ));
 }
 
 #[test]
