@@ -82,3 +82,14 @@ default = []
 colored = ["dep:colored", "tracing-subscriber/ansi"]
 specta = ["dep:specta"]
 timing = ["dep:compact_str", "dep:ahash"]
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "strip_ansi"
+harness = false
+
+[[bench]]
+name = "callstack"
+harness = false

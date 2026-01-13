@@ -1,0 +1,63 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bench.yml'
+      - 'benches/**'
+      - 'guest-js/index.bench.ts'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/bench.yml'
+      - 'benches/**'
+      - 'guest-js/index.bench.ts'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SCCACHE_GHA_ENABLED: 'true'
+  RUSTC_WRAPPER: 'sccache'
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-bench:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@v4
+
+      - name: install webkit2gtk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run Rust benchmarks
+        run: cargo bench --all-features
+
+  js-bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm i --frozen-lockfile
+      - name: Run JavaScript benchmarks
+        run: pnpm bench
