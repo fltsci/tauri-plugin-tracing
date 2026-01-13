@@ -97,8 +97,7 @@ use tauri::plugin::{self, TauriPlugin};
 use tauri::{AppHandle, Manager, Runtime};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
-    Layer as _,
-    Registry,
+    Layer as _, Registry,
     filter::{Targets, filter_fn},
     fmt::{self, SubscriberBuilder},
     layer::SubscriberExt,
@@ -847,12 +846,11 @@ impl Builder {
 
     #[cfg(feature = "timing")]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
-        plugin::Builder::new("tracing")
-            .invoke_handler(tauri::generate_handler![
-                commands::log,
-                commands::time,
-                commands::time_end
-            ])
+        plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![
+            commands::log,
+            commands::time,
+            commands::time_end
+        ])
     }
 
     #[cfg(not(feature = "timing"))]
