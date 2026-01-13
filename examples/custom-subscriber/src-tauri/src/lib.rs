@@ -1,6 +1,6 @@
 use tauri::Manager;
 use tauri_plugin_tracing::{LevelFilter, WebviewLayer};
-use tracing_subscriber::{layer::SubscriberExt, Registry};
+use tracing_subscriber::{Registry, layer::SubscriberExt};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
