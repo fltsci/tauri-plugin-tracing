@@ -504,3 +504,37 @@ fn builder_configured_timezone_strategy() {
         TimezoneStrategy::Local
     ));
 }
+
+#[test]
+fn builder_with_filter() {
+    // Test basic filter usage
+    let _plugin = Builder::new()
+        .filter(|metadata| metadata.target() != "noisy_crate")
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_by_level() {
+    // Test filtering by level
+    let _plugin = Builder::new()
+        .filter(|metadata| *metadata.level() <= tracing::Level::INFO)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_events_only() {
+    // Test filtering to only events (not spans)
+    let _plugin = Builder::new()
+        .filter(|metadata| metadata.is_event())
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_combined() {
+    // Test filter combined with other configuration
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_target("hyper", LevelFilter::WARN)
+        .filter(|metadata| !metadata.target().contains("spammy"))
+        .build::<tauri::Wry>();
+}
