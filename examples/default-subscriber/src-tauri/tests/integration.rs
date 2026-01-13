@@ -520,3 +520,73 @@ fn builder_with_timezone_and_file_logging() {
         .with_default_subscriber()
         .build::<tauri::Wry>();
 }
+
+#[test]
+fn builder_with_filter() {
+    // Test basic filter usage
+    let _plugin = Builder::new()
+        .filter(|metadata| metadata.target() != "noisy_crate")
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_by_level() {
+    // Test filtering by level
+    let _plugin = Builder::new()
+        .filter(|metadata| *metadata.level() <= tracing::Level::INFO)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_events_only() {
+    // Test filtering to only events (not spans)
+    let _plugin = Builder::new()
+        .filter(|metadata| metadata.is_event())
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_by_target_prefix() {
+    // Test filtering by target prefix
+    let _plugin = Builder::new()
+        .filter(|metadata| metadata.target().starts_with("my_app"))
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_combined() {
+    // Test filter combined with other configuration
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_target("hyper", LevelFilter::WARN)
+        .filter(|metadata| !metadata.target().contains("spammy"))
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_and_default_subscriber() {
+    // Test filter with default subscriber (the main use case)
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::TRACE)
+        .filter(|metadata| metadata.target() != "excluded_module")
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_filter_full_config() {
+    // Test filter with full configuration
+    let _plugin = Builder::new()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .with_target("tao::platform_impl", LevelFilter::WARN)
+        .filter(|metadata| {
+            // Complex filter: exclude certain modules and only events
+            let target = metadata.target();
+            !target.contains("verbose") && metadata.is_event()
+        })
+        .with_file_logging()
+        .with_rotation(Rotation::Daily)
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}

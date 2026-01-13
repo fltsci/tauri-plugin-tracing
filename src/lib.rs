@@ -98,10 +98,17 @@ use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
     Layer, Registry,
-    filter::Targets,
+    filter::{Targets, filter_fn},
     fmt::{self, SubscriberBuilder},
     layer::SubscriberExt,
 };
+
+/// A boxed filter function for metadata-based log filtering.
+///
+/// This type alias represents a filter that examines event metadata to determine
+/// whether a log should be emitted. The function receives a reference to the
+/// metadata and returns `true` if the log should be included.
+pub type FilterFn = Box<dyn Fn(&tracing::Metadata<'_>) -> bool + Send + Sync>;
 
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -682,6 +689,7 @@ pub struct Builder {
     builder: SubscriberBuilder,
     log_level: LevelFilter,
     filter: Targets,
+    custom_filter: Option<FilterFn>,
     targets: Vec<Target>,
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
@@ -698,6 +706,7 @@ impl Default for Builder {
             builder: SubscriberBuilder::default(),
             log_level: LevelFilter::WARN,
             filter: Targets::default(),
+            custom_filter: None,
             targets: vec![Target::Stdout, Target::Webview],
             rotation: Rotation::default(),
             rotation_strategy: RotationStrategy::default(),
@@ -748,6 +757,43 @@ impl Builder {
     /// ```
     pub fn with_target(mut self, target: &str, level: LevelFilter) -> Self {
         self.filter = self.filter.with_target(target, level);
+        self
+    }
+
+    /// Sets a custom filter function for metadata-based log filtering.
+    ///
+    /// The filter function receives the metadata for each log event and returns
+    /// `true` if the event should be logged. This filter is applied in addition
+    /// to the level and target filters configured via [`with_max_level()`](Self::with_max_level)
+    /// and [`with_target()`](Self::with_target).
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    /// For custom subscribers, use [`tracing_subscriber::filter::filter_fn()`] directly.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::Builder;
+    ///
+    /// // Filter out logs from a specific module
+    /// Builder::new()
+    ///     .filter(|metadata| {
+    ///         metadata.target() != "noisy_crate::spammy_module"
+    ///     })
+    ///     .with_default_subscriber()
+    ///     .build();
+    ///
+    /// // Only log events (not spans)
+    /// Builder::new()
+    ///     .filter(|metadata| metadata.is_event())
+    ///     .with_default_subscriber()
+    ///     .build();
+    /// ```
+    pub fn filter<F>(mut self, filter: F) -> Self
+    where
+        F: Fn(&tracing::Metadata<'_>) -> bool + Send + Sync + 'static,
+    {
+        self.custom_filter = Some(Box::new(filter));
         self
     }
 
@@ -1081,6 +1127,7 @@ impl Builder {
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
         let log_level = self.log_level;
         let filter = self.filter;
+        let custom_filter = self.custom_filter;
         let targets = self.targets;
         let rotation = self.rotation;
         let rotation_strategy = self.rotation_strategy;
@@ -1102,6 +1149,7 @@ impl Builder {
                         app,
                         log_level,
                         filter,
+                        custom_filter,
                         &targets,
                         rotation,
                         rotation_strategy,
@@ -1207,6 +1255,7 @@ fn acquire_logger<R: Runtime>(
     app_handle: &AppHandle<R>,
     log_level: LevelFilter,
     filter: Targets,
+    custom_filter: Option<FilterFn>,
     targets: &[Target],
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
@@ -1361,12 +1410,16 @@ fn acquire_logger<R: Runtime>(
         (None, None)
     };
 
+    // Create custom filter layer if configured
+    let custom_filter_layer = custom_filter.map(|f| filter_fn(move |metadata| f(metadata)));
+
     // Compose the subscriber with all optional layers
     let subscriber = Registry::default()
         .with(stdout_layer)
         .with(stderr_layer)
         .with(file_layer)
         .with(webview_layer)
+        .with(custom_filter_layer)
         .with(filter_with_default);
 
     tracing::subscriber::set_global_default(subscriber)?;

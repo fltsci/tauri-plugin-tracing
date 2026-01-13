@@ -36,7 +36,7 @@ A modified version of `@tauri-apps/plugin-log` that implements the `tracing` cra
 - [x] `with_max_file_size()` - size-based rotation threshold
 - [x] `with_timezone_strategy()` - timestamp timezone (UTC or local)
 - [ ] `format()` / `clear_format()` - custom formatting
-- [ ] `filter()` - metadata-based filtering
+- [x] `filter()` - metadata-based filtering
 - [ ] Custom tracing layers/targets
 
 ### Extra Features (not in tauri-plugin-log)
