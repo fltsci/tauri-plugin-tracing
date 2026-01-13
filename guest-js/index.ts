@@ -132,10 +132,49 @@ const cleanUntypedValue = (value: unknown): string =>
   stripAnsi(JSON.stringify(value, getCircularReplacer()))
 
 /**
+ * Performs printf-style string formatting like console.log.
+ *
+ * Supports the following format specifiers:
+ * - `%s` - String
+ * - `%d`, `%i` - Integer
+ * - `%f` - Float
+ * - `%o`, `%O` - Object (JSON)
+ * - `%%` - Literal percent sign
+ *
+ * @param format - The format string
+ * @param args - Arguments to substitute
+ * @returns The formatted string and any remaining arguments
+ */
+function formatPrintf(format: string, args: unknown[]): [string, unknown[]] {
+  const remainingArgs = [...args]
+  const result = format.replace(/%([sdifooO%])/g, (match, specifier) => {
+    if (specifier === '%') return '%'
+    if (remainingArgs.length === 0) return match
+
+    const arg = remainingArgs.shift()
+    switch (specifier) {
+      case 's':
+        return String(arg)
+      case 'd':
+      case 'i':
+        return String(Math.floor(Number(arg)))
+      case 'f':
+        return String(Number(arg))
+      case 'o':
+      case 'O':
+        return JSON.stringify(arg, getCircularReplacer())
+      default:
+        return match
+    }
+  })
+  return [result, remainingArgs]
+}
+
+/**
  * Sanitizes a log message for transmission to the Rust backend.
  *
- * Handles strings, arrays, and objects by stripping ANSI codes and
- * converting values to safe string representations.
+ * Handles printf-style format strings (like console.log), strips ANSI codes,
+ * and converts values to safe string representations.
  *
  * @param message - The log message to clean
  * @returns A sanitized LogMessage array
@@ -145,8 +184,17 @@ const cleanMessage = (message: LogMessage): LogMessage => {
   if (typeof message === 'string') {
     safeMessage.push(stripAnsi(message))
   } else if (Array.isArray(message)) {
-    for (const msg of message) {
-      safeMessage.push(stripAnsi(msg))
+    // Check if first argument is a string that might be a format string
+    if (message.length > 1 && typeof message[0] === 'string' && message[0].includes('%')) {
+      const [formatted, remaining] = formatPrintf(message[0], message.slice(1))
+      safeMessage.push(stripAnsi(formatted))
+      for (const arg of remaining) {
+        safeMessage.push(stripAnsi(arg))
+      }
+    } else {
+      for (const msg of message) {
+        safeMessage.push(stripAnsi(msg))
+      }
     }
   } else if (typeof message === 'object') {
     for (const [key, value] of Object.entries(message)) {
