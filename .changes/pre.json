@@ -10,6 +10,7 @@
     ".changes/add-max-file-size.md",
     ".changes/add-release-channel-checking-to-ci.md",
     ".changes/add-specta.md",
+    ".changes/add-strip-ansi-writer.md",
     ".changes/add-target-filters.md",
     ".changes/add-targets-api.md",
     ".changes/add-timezone-strategy.md",
