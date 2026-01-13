@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.9]
+
+- [`f364659`](https://github.com/fltsci/tauri-plugin-tracing/commit/f364659631d66e9e47b2fb3e1364222660483978) ([#58](https://github.com/fltsci/tauri-plugin-tracing/pull/58) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Rewrote README with comprehensive documentation including installation instructions, quick start guide, feature documentation with code examples, and JavaScript API reference.
+
 ## \[0.2.0-canary.8]
 
 - [`c52d634`](https://github.com/fltsci/tauri-plugin-tracing/commit/c52d6343503727879921e78afc0a124b04eee6a3) ([#56](https://github.com/fltsci/tauri-plugin-tracing/pull/56) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add `with_layer()` method and `BoxedLayer` type alias for custom tracing layer support. Users can now add their own `tracing_subscriber::Layer` implementations to the subscriber stack.
