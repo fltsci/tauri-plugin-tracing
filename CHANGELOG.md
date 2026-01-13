@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.11]
+
+- [`9eba679`](https://github.com/fltsci/tauri-plugin-tracing/commit/9eba679389dec8bedc60b83711210568496ed935) ([#62](https://github.com/fltsci/tauri-plugin-tracing/pull/62) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add automatic docs upload to Kellnr after publish.
+
 ## \[0.2.0-canary.10]
 
 - [`4155d67`](https://github.com/fltsci/tauri-plugin-tracing/commit/4155d6762dac9d7084c5e4ef5e445b26a46f4e22) ([#60](https://github.com/fltsci/tauri-plugin-tracing/pull/60) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix doctests to be compile-checked instead of ignored, eliminating "this example is not tested" warnings.
