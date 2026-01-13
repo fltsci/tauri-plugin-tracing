@@ -594,3 +594,28 @@ fn format_options_default() {
     assert!(options.target);
     assert!(options.level);
 }
+
+#[test]
+fn builder_with_layer() {
+    use tracing_subscriber::Layer;
+
+    // Create a simple no-op layer for testing
+    let noop_layer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::sink)
+        .boxed();
+
+    let _plugin = Builder::new().with_layer(noop_layer).build::<tauri::Wry>();
+}
+
+#[test]
+fn boxed_layer_type_exported() {
+    // Verify BoxedLayer type is exported and can be used
+    use tauri_plugin_tracing::BoxedLayer;
+    use tracing_subscriber::Layer;
+
+    let layer: BoxedLayer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::sink)
+        .boxed();
+
+    let _plugin = Builder::new().with_layer(layer).build::<tauri::Wry>();
+}

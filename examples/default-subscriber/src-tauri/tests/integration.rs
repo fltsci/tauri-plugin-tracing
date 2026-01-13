@@ -713,3 +713,46 @@ fn builder_format_full_config() {
         .with_default_subscriber()
         .build::<tauri::Wry>();
 }
+
+#[test]
+fn builder_with_layer() {
+    use tracing_subscriber::Layer;
+
+    // Create a simple no-op layer for testing
+    let noop_layer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::sink)
+        .boxed();
+
+    let _plugin = Builder::new().with_layer(noop_layer).build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_layer_and_default_subscriber() {
+    use tracing_subscriber::Layer;
+
+    let noop_layer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::sink)
+        .boxed();
+
+    let _plugin = Builder::new()
+        .with_layer(noop_layer)
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_layer_full_config() {
+    use tauri_plugin_tracing::LogFormat;
+    use tracing_subscriber::Layer;
+
+    let noop_layer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::sink)
+        .boxed();
+
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_format(LogFormat::Compact)
+        .with_layer(noop_layer)
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
