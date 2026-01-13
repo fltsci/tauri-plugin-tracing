@@ -853,16 +853,25 @@ fn log<R: Runtime>(
 
 #[cfg(feature = "timing")]
 #[tauri::command]
-async fn time<R: Runtime>(app: AppHandle<R>, label: String) {
+async fn time<R: Runtime>(app: AppHandle<R>, window: tauri::Window<R>, label: String) {
     use compact_str::ToCompactString;
-    app.time(label.to_compact_string()).await;
+    // Namespace timer by window label to prevent cross-window interference
+    let key = format!("{}:{}", window.label(), label);
+    app.time(key.to_compact_string()).await;
 }
 
 #[cfg(feature = "timing")]
 #[tauri::command]
-async fn time_end<R: Runtime>(app: AppHandle<R>, label: String, call_stack: Option<String>) {
+async fn time_end<R: Runtime>(
+    app: AppHandle<R>,
+    window: tauri::Window<R>,
+    label: String,
+    call_stack: Option<String>,
+) {
     use compact_str::ToCompactString;
-    app.time_end(label.to_compact_string(), call_stack).await;
+    // Namespace timer by window label to prevent cross-window interference
+    let key = format!("{}:{}", window.label(), label);
+    app.time_end(key.to_compact_string(), call_stack).await;
 }
 
 /// Builder for configuring and creating the tracing plugin.
