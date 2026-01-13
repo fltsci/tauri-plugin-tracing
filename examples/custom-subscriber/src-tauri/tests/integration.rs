@@ -538,3 +538,59 @@ fn builder_with_filter_combined() {
         .filter(|metadata| !metadata.target().contains("spammy"))
         .build::<tauri::Wry>();
 }
+
+#[test]
+fn log_format_default() {
+    use tauri_plugin_tracing::LogFormat;
+    assert!(matches!(LogFormat::default(), LogFormat::Full));
+}
+
+#[test]
+fn builder_with_format() {
+    use tauri_plugin_tracing::LogFormat;
+
+    let _plugin = Builder::new()
+        .with_format(LogFormat::Compact)
+        .build::<tauri::Wry>();
+
+    let _plugin = Builder::new()
+        .with_format(LogFormat::Pretty)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_format_options() {
+    let _plugin = Builder::new()
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_target_display(false)
+        .with_level(false)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_configured_format() {
+    use tauri_plugin_tracing::LogFormat;
+
+    let builder = Builder::new().with_format(LogFormat::Pretty);
+    assert!(matches!(builder.configured_format(), LogFormat::Pretty));
+
+    let options = builder.configured_format_options();
+    assert!(matches!(options.format, LogFormat::Pretty));
+}
+
+#[test]
+fn format_options_default() {
+    use tauri_plugin_tracing::{FormatOptions, LogFormat};
+
+    let options = FormatOptions::default();
+    assert!(matches!(options.format, LogFormat::Full));
+    assert!(!options.file);
+    assert!(!options.line_number);
+    assert!(!options.thread_ids);
+    assert!(!options.thread_names);
+    assert!(options.target);
+    assert!(options.level);
+}
