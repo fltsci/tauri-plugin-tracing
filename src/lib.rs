@@ -17,29 +17,25 @@
 //! following the convention that libraries should not set globals. You compose
 //! your own subscriber using [`WebviewLayer`] to forward logs to the frontend:
 //!
-//! ```rust,ignore
-//! use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-//! use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+//! ```rust,no_run
+//! # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
+//! # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+//! let tracing_builder = Builder::new()
+//!     .with_max_level(LevelFilter::DEBUG)
+//!     .with_target("hyper", LevelFilter::WARN);
+//! let filter = tracing_builder.build_filter();
 //!
-//! fn main() {
-//!     let tracing_builder = Builder::new()
-//!         .with_max_level(LevelFilter::DEBUG)
-//!         .with_target("hyper", LevelFilter::WARN);
-//!     let filter = tracing_builder.build_filter();
-//!
-//!     tauri::Builder::default()
-//!         .plugin(tracing_builder.build())
-//!         .setup(move |app| {
-//!             let subscriber = Registry::default()
-//!                 .with(fmt::layer())
-//!                 .with(WebviewLayer::new(app.handle().clone()))
-//!                 .with(filter);
-//!             tracing::subscriber::set_global_default(subscriber)?;
-//!             Ok(())
-//!         })
-//!         .run(tauri::generate_context!())
-//!         .expect("error while running tauri application");
-//! }
+//! tauri::Builder::default()
+//!     .plugin(tracing_builder.build())
+//!     .setup(move |app| {
+//!         let subscriber = Registry::default()
+//!             .with(fmt::layer())
+//!             .with(WebviewLayer::new(app.handle().clone()))
+//!             .with(filter);
+//!         tracing::subscriber::set_global_default(subscriber)?;
+//!         Ok(())
+//!     });
+//!     // .run(tauri::generate_context!())
 //! ```
 //!
 //! ## Quick Start
@@ -47,30 +43,29 @@
 //! For simple applications, use [`Builder::with_default_subscriber()`] to let
 //! the plugin handle all tracing setup:
 //!
-//! ```rust,ignore
-//! use tauri_plugin_tracing::{Builder, LevelFilter};
-//!
+//! ```rust,no_run
+//! # use tauri_plugin_tracing::{Builder, LevelFilter};
 //! tauri::Builder::default()
 //!     .plugin(
 //!         Builder::new()
 //!             .with_max_level(LevelFilter::DEBUG)
 //!             .with_default_subscriber()  // Let plugin set up tracing
 //!             .build(),
-//!     )
-//!     .run(tauri::generate_context!())
-//!     .expect("error while running tauri application");
+//!     );
+//!     // .run(tauri::generate_context!())
 //! ```
 //!
 //! ## File Logging
 //!
 //! File logging requires [`Builder::with_default_subscriber()`]:
 //!
-//! ```rust,ignore
+//! ```rust,no_run
+//! # use tauri_plugin_tracing::{Builder, LevelFilter};
 //! Builder::new()
 //!     .with_max_level(LevelFilter::DEBUG)
 //!     .with_file_logging()
 //!     .with_default_subscriber()
-//!     .build()
+//!     .build::<tauri::Wry>();
 //! ```
 //!
 //! Log files rotate daily and are written to:
@@ -118,17 +113,17 @@ pub type FilterFn = Box<dyn Fn(&tracing::Metadata<'_>) -> bool + Send + Sync>;
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, BoxedLayer};
 /// use tracing_subscriber::Layer;
 ///
-/// // Create a custom layer and box it
-/// let my_layer: BoxedLayer = my_custom_layer.boxed();
+/// // Create a custom layer (e.g., from another crate) and box it
+/// let my_layer: BoxedLayer = tracing_subscriber::fmt::layer().boxed();
 ///
 /// Builder::new()
 ///     .with_layer(my_layer)
 ///     .with_default_subscriber()
-///     .build()
+///     .build::<tauri::Wry>();
 /// ```
 pub type BoxedLayer = Box<dyn Layer<Registry> + Send + Sync + 'static>;
 
@@ -146,13 +141,16 @@ pub use timing::*;
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
+/// # #[cfg(feature = "timing")]
+/// # async fn example(app: tauri::AppHandle) {
 /// use tauri_plugin_tracing::LoggerExt;
 ///
 /// // In a Tauri command:
 /// app.time("my_operation".into()).await;
 /// // ... perform operation ...
 /// app.time_end("my_operation".into(), None).await;
+/// # }
 /// ```
 #[async_trait::async_trait]
 pub trait LoggerExt<R: Runtime> {
@@ -247,14 +245,13 @@ impl Serialize for Error {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, Target};
-/// use std::path::PathBuf;
 ///
 /// // Log to stdout and webview (default behavior)
 /// Builder::new()
 ///     .targets([Target::Stdout, Target::Webview])
-///     .build();
+///     .build::<tauri::Wry>();
 ///
 /// // Log to file and webview only (no console)
 /// Builder::new()
@@ -262,14 +259,14 @@ impl Serialize for Error {
 ///         Target::LogDir { file_name: None },
 ///         Target::Webview,
 ///     ])
-///     .build();
+///     .build::<tauri::Wry>();
 ///
 /// // Log to stderr instead of stdout
 /// Builder::new()
 ///     .clear_targets()
 ///     .target(Target::Stderr)
 ///     .target(Target::Webview)
-///     .build();
+///     .build::<tauri::Wry>();
 /// ```
 #[derive(Debug, Clone)]
 pub enum Target {
@@ -317,13 +314,13 @@ pub enum Target {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, Rotation};
 ///
 /// Builder::new()
 ///     .with_file_logging()
 ///     .with_rotation(Rotation::Daily)  // Create new file each day
-///     .build()
+///     .build::<tauri::Wry>();
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub enum Rotation {
@@ -344,13 +341,13 @@ pub enum Rotation {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, RotationStrategy};
 ///
 /// Builder::new()
 ///     .with_file_logging()
 ///     .with_rotation_strategy(RotationStrategy::KeepSome(7))  // Keep 7 most recent files
-///     .build()
+///     .build::<tauri::Wry>();
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub enum RotationStrategy {
@@ -369,12 +366,12 @@ pub enum RotationStrategy {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, LogFormat};
 ///
 /// Builder::new()
 ///     .with_format(LogFormat::Compact)
-///     .build()
+///     .build::<tauri::Wry>();
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub enum LogFormat {
@@ -439,13 +436,13 @@ impl Default for FormatOptions {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, MaxFileSize};
 ///
 /// Builder::new()
 ///     .with_file_logging()
 ///     .with_max_file_size(MaxFileSize::mb(10))  // Rotate at 10 MB
-///     .build()
+///     .build::<tauri::Wry>();
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct MaxFileSize(u64);
@@ -489,12 +486,12 @@ impl From<u64> for MaxFileSize {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, TimezoneStrategy};
 ///
 /// Builder::new()
 ///     .with_timezone_strategy(TimezoneStrategy::Local)
-///     .build()
+///     .build::<tauri::Wry>();
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub enum TimezoneStrategy {
@@ -566,10 +563,9 @@ pub struct RecordPayload {
 /// By default, the plugin does not set up a global subscriber. Use this layer
 /// when composing your own subscriber:
 ///
-/// ```rust,ignore
-/// use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-/// use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
-///
+/// ```rust,no_run
+/// # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
+/// # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
 /// let builder = Builder::new()
 ///     .with_max_level(LevelFilter::DEBUG);
 /// let filter = builder.build_filter();
@@ -583,9 +579,8 @@ pub struct RecordPayload {
 ///             .with(filter);
 ///         tracing::subscriber::set_global_default(subscriber)?;
 ///         Ok(())
-///     })
-///     .run(tauri::generate_context!())
-///     .expect("error while running tauri application");
+///     });
+///     // .run(tauri::generate_context!())
 /// ```
 pub struct WebviewLayer<R: Runtime> {
     app_handle: AppHandle<R>,
@@ -768,14 +763,14 @@ async fn time_end<R: Runtime>(app: AppHandle<R>, label: String, call_stack: Opti
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use tauri_plugin_tracing::{Builder, LevelFilter};
 ///
 /// let plugin = Builder::new()
 ///     .with_max_level(LevelFilter::DEBUG)
 ///     .with_target("hyper", LevelFilter::WARN)  // Reduce noise from hyper
 ///     .with_target("my_app", LevelFilter::TRACE)  // Verbose logging for your app
-///     .build();
+///     .build::<tauri::Wry>();
 /// ```
 pub struct Builder {
     builder: SubscriberBuilder,
@@ -841,8 +836,9 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
-    /// Builder::new().with_max_level(LevelFilter::DEBUG)
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::{Builder, LevelFilter};
+    /// Builder::new().with_max_level(LevelFilter::DEBUG);
     /// ```
     pub fn with_max_level(mut self, max_level: LevelFilter) -> Self {
         self.log_level = max_level;
@@ -857,11 +853,12 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::{Builder, LevelFilter};
     /// Builder::new()
     ///     .with_max_level(LevelFilter::INFO)
     ///     .with_target("my_app::database", LevelFilter::DEBUG)
-    ///     .with_target("hyper", LevelFilter::WARN)
+    ///     .with_target("hyper", LevelFilter::WARN);
     /// ```
     pub fn with_target(mut self, target: &str, level: LevelFilter) -> Self {
         self.filter = self.filter.with_target(target, level);
@@ -880,7 +877,7 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::Builder;
     ///
     /// // Filter out logs from a specific module
@@ -889,13 +886,13 @@ impl Builder {
     ///         metadata.target() != "noisy_crate::spammy_module"
     ///     })
     ///     .with_default_subscriber()
-    ///     .build();
+    ///     .build::<tauri::Wry>();
     ///
     /// // Only log events (not spans)
     /// Builder::new()
     ///     .filter(|metadata| metadata.is_event())
     ///     .with_default_subscriber()
-    ///     .build();
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn filter<F>(mut self, filter: F) -> Self
     where
@@ -918,17 +915,17 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::Builder;
     /// use tracing_subscriber::Layer;
     ///
-    /// // Add a custom layer (e.g., OpenTelemetry)
-    /// let otel_layer = tracing_opentelemetry::layer().boxed();
+    /// // Add a custom layer (e.g., a secondary fmt layer or OpenTelemetry)
+    /// let custom_layer = tracing_subscriber::fmt::layer().boxed();
     ///
     /// Builder::new()
-    ///     .with_layer(otel_layer)
+    ///     .with_layer(custom_layer)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_layer(mut self, layer: BoxedLayer) -> Self {
         self.custom_layer = Some(layer);
@@ -961,11 +958,12 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::{Builder, LevelFilter};
     /// Builder::new()
     ///     .with_max_level(LevelFilter::DEBUG)
     ///     .with_file_logging()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_file_logging(self) -> Self {
         self.target(Target::LogDir { file_name: None })
@@ -978,13 +976,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, Rotation};
     ///
     /// Builder::new()
     ///     .with_file_logging()
     ///     .with_rotation(Rotation::Hourly)  // Rotate every hour
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_rotation(mut self, rotation: Rotation) -> Self {
         self.rotation = rotation;
@@ -998,13 +996,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, RotationStrategy};
     ///
     /// Builder::new()
     ///     .with_file_logging()
     ///     .with_rotation_strategy(RotationStrategy::KeepSome(7))  // Keep 7 files
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_rotation_strategy(mut self, strategy: RotationStrategy) -> Self {
         self.rotation_strategy = strategy;
@@ -1023,14 +1021,14 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, MaxFileSize};
     ///
     /// // Rotate when file reaches 10 MB
     /// Builder::new()
     ///     .with_file_logging()
     ///     .with_max_file_size(MaxFileSize::mb(10))
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_max_file_size(mut self, size: MaxFileSize) -> Self {
         self.max_file_size = Some(size);
@@ -1044,13 +1042,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, TimezoneStrategy};
     ///
     /// // Use local time for timestamps
     /// Builder::new()
     ///     .with_timezone_strategy(TimezoneStrategy::Local)
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_timezone_strategy(mut self, strategy: TimezoneStrategy) -> Self {
         self.timezone_strategy = strategy;
@@ -1064,14 +1062,14 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, LogFormat};
     ///
     /// // Use compact format for shorter lines
     /// Builder::new()
     ///     .with_format(LogFormat::Compact)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_format(mut self, format: LogFormat) -> Self {
         self.log_format = format;
@@ -1087,11 +1085,12 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// Builder::new()
     ///     .with_file(true)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_file(mut self, show: bool) -> Self {
         self.show_file = show;
@@ -1107,11 +1106,12 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// Builder::new()
     ///     .with_line_number(true)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_line_number(mut self, show: bool) -> Self {
         self.show_line_number = show;
@@ -1127,11 +1127,12 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// Builder::new()
     ///     .with_thread_ids(true)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_thread_ids(mut self, show: bool) -> Self {
         self.show_thread_ids = show;
@@ -1147,11 +1148,12 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// Builder::new()
     ///     .with_thread_names(true)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_thread_names(mut self, show: bool) -> Self {
         self.show_thread_names = show;
@@ -1167,12 +1169,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// // Disable target display for cleaner output
     /// Builder::new()
     ///     .with_target_display(false)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_target_display(mut self, show: bool) -> Self {
         self.show_target = show;
@@ -1188,12 +1191,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// // Disable level display
     /// Builder::new()
     ///     .with_level(false)
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn with_level(mut self, show: bool) -> Self {
         self.show_level = show;
@@ -1207,13 +1211,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, Target};
     ///
     /// // Add file logging to the default targets
     /// Builder::new()
     ///     .target(Target::LogDir { file_name: None })
-    ///     .build();
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn target(mut self, target: Target) -> Self {
         self.targets.push(target);
@@ -1227,7 +1231,7 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, Target};
     ///
     /// // Log only to file and webview (no stdout)
@@ -1236,12 +1240,12 @@ impl Builder {
     ///         Target::LogDir { file_name: None },
     ///         Target::Webview,
     ///     ])
-    ///     .build();
+    ///     .build::<tauri::Wry>();
     ///
     /// // Log only to stderr
     /// Builder::new()
     ///     .targets([Target::Stderr])
-    ///     .build();
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn targets(mut self, targets: impl IntoIterator<Item = Target>) -> Self {
         self.targets = targets.into_iter().collect();
@@ -1255,14 +1259,14 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, Target};
     ///
     /// // Start fresh and only log to webview
     /// Builder::new()
     ///     .clear_targets()
     ///     .target(Target::Webview)
-    ///     .build();
+    ///     .build::<tauri::Wry>();
     /// ```
     pub fn clear_targets(mut self) -> Self {
         self.targets.clear();
@@ -1280,9 +1284,8 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
-    /// use tauri_plugin_tracing::{Builder, LevelFilter};
-    ///
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::{Builder, LevelFilter};
     /// // Let the plugin set up everything
     /// tauri::Builder::default()
     ///     .plugin(
@@ -1291,9 +1294,8 @@ impl Builder {
     ///             .with_file_logging()
     ///             .with_default_subscriber()  // Opt-in to global subscriber
     ///             .build()
-    ///     )
-    ///     .run(tauri::generate_context!())
-    ///     .expect("error while running tauri application");
+    ///     );
+    ///     // .run(tauri::generate_context!())
     /// ```
     pub fn with_default_subscriber(mut self) -> Self {
         self.set_default_subscriber = true;
@@ -1307,7 +1309,7 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use tauri_plugin_tracing::{Builder, Target};
     ///
     /// let builder = Builder::new()
@@ -1372,10 +1374,9 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
-    /// use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-    /// use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
-    ///
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
+    /// # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
     /// let builder = Builder::new()
     ///     .with_max_level(LevelFilter::DEBUG)
     ///     .with_target("hyper", LevelFilter::WARN);
@@ -1391,9 +1392,8 @@ impl Builder {
     ///             .with(filter);
     ///         tracing::subscriber::set_global_default(subscriber)?;
     ///         Ok(())
-    ///     })
-    ///     .run(tauri::generate_context!())
-    ///     .expect("error while running tauri application");
+    ///     });
+    ///     // .run(tauri::generate_context!())
     /// ```
     pub fn build_filter(&self) -> Targets {
         self.filter.clone().with_default(self.log_level)
@@ -1417,11 +1417,11 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
+    /// # use tauri_plugin_tracing::Builder;
     /// tauri::Builder::default()
-    ///     .plugin(Builder::new().build())
-    ///     .run(tauri::generate_context!())
-    ///     .expect("error while running tauri application");
+    ///     .plugin(Builder::new().build());
+    ///     // .run(tauri::generate_context!())
     /// ```
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
         let log_level = self.log_level;
