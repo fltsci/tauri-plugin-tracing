@@ -36,6 +36,7 @@ tokio = { version = "1.48.0", features = ["full"] }
 tracing = { version = "0.1.43" }
 time = { version = "0.3.44", default-features = false }
 tracing-appender = "0.2.4"
+rolling-file = "0.2.0"
 tracing-core = "0.1.35"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 colored = { version = "3.0.0" }
@@ -54,6 +55,7 @@ tracing.workspace = true
 tokio.workspace = true
 time.workspace = true
 tracing-appender.workspace = true
+rolling-file.workspace = true
 tracing-core.workspace = true
 tracing-subscriber.workspace = true
 colored = { workspace = true, optional = true }
