@@ -57,7 +57,7 @@
 //!
 //! ## File Logging
 //!
-//! File logging requires [`Builder::with_default_subscriber()`]:
+//! For simple file logging, use [`Builder::with_file_logging()`]:
 //!
 //! ```rust,no_run
 //! # use tauri_plugin_tracing::{Builder, LevelFilter};
@@ -66,6 +66,33 @@
 //!     .with_file_logging()
 //!     .with_default_subscriber()
 //!     .build::<tauri::Wry>();
+//! ```
+//!
+//! For custom subscribers, use [`tracing_appender`] directly (re-exported by this crate):
+//!
+//! ```rust,no_run
+//! # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, tracing_appender};
+//! # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+//! let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
+//! let filter = tracing_builder.build_filter();
+//!
+//! tauri::Builder::default()
+//!     .plugin(tracing_builder.build())
+//!     .setup(move |app| {
+//!         let log_dir = app.path().app_log_dir()?;
+//!         let file_appender = tracing_appender::rolling::daily(&log_dir, "app.log");
+//!         let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+//!         // Store _guard in Tauri state to keep file logging active
+//!
+//!         let subscriber = Registry::default()
+//!             .with(fmt::layer())
+//!             .with(fmt::layer().with_ansi(false).with_writer(non_blocking))
+//!             .with(WebviewLayer::new(app.handle().clone()))
+//!             .with(filter);
+//!         tracing::subscriber::set_global_default(subscriber)?;
+//!         Ok(())
+//!     });
+//!     // .run(tauri::generate_context!())
 //! ```
 //!
 //! Log files rotate daily and are written to:
