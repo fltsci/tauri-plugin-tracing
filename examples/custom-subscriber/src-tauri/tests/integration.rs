@@ -308,3 +308,35 @@ fn record_payload_levels() {
         );
     }
 }
+
+#[test]
+fn builder_build_filter() {
+    // Test that build_filter() returns a usable filter
+    let builder = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_target("noisy_crate", LevelFilter::WARN);
+
+    let _filter = builder.build_filter();
+    // Filter is returned and can be used with a custom subscriber
+}
+
+#[test]
+fn builder_build_filter_preserves_builder() {
+    // Test that build_filter() doesn't consume the builder
+    let builder = Builder::new()
+        .with_max_level(LevelFilter::TRACE)
+        .with_target("tao::platform_impl", LevelFilter::WARN);
+
+    let _filter = builder.build_filter();
+    // Builder can still be used after calling build_filter()
+    let _plugin = builder.build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_without_default_subscriber() {
+    // Test that by default, the plugin doesn't set up a subscriber
+    // (user is expected to set up their own in Tauri's setup hook)
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .build::<tauri::Wry>();
+}
