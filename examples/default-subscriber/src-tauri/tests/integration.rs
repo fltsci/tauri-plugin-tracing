@@ -5,7 +5,8 @@
 
 use std::path::PathBuf;
 use tauri_plugin_tracing::{
-    Builder, CallStack, CallStackLine, LevelFilter, LogLevel, Rotation, RotationStrategy, Target,
+    Builder, CallStack, CallStackLine, LevelFilter, LogLevel, MaxFileSize, Rotation,
+    RotationStrategy, Target,
 };
 
 #[test]
@@ -388,6 +389,88 @@ fn builder_with_default_subscriber_full_config() {
         .with_file_logging()
         .with_rotation(Rotation::Daily)
         .with_rotation_strategy(RotationStrategy::KeepSome(7))
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn max_file_size_bytes() {
+    let size = MaxFileSize::bytes(1024);
+    assert_eq!(size.as_bytes(), 1024);
+}
+
+#[test]
+fn max_file_size_kb() {
+    let size = MaxFileSize::kb(1);
+    assert_eq!(size.as_bytes(), 1024);
+
+    let size = MaxFileSize::kb(10);
+    assert_eq!(size.as_bytes(), 10 * 1024);
+}
+
+#[test]
+fn max_file_size_mb() {
+    let size = MaxFileSize::mb(1);
+    assert_eq!(size.as_bytes(), 1024 * 1024);
+
+    let size = MaxFileSize::mb(10);
+    assert_eq!(size.as_bytes(), 10 * 1024 * 1024);
+}
+
+#[test]
+fn max_file_size_gb() {
+    let size = MaxFileSize::gb(1);
+    assert_eq!(size.as_bytes(), 1024 * 1024 * 1024);
+}
+
+#[test]
+fn max_file_size_from_u64() {
+    let size: MaxFileSize = 2048u64.into();
+    assert_eq!(size.as_bytes(), 2048);
+}
+
+#[test]
+fn builder_with_max_file_size() {
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_max_file_size(MaxFileSize::mb(10))
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_configured_max_file_size() {
+    // Default is None
+    let builder = Builder::new();
+    assert!(builder.configured_max_file_size().is_none());
+
+    // After setting, should return the configured value
+    let builder = Builder::new().with_max_file_size(MaxFileSize::mb(5));
+    let max_size = builder.configured_max_file_size().unwrap();
+    assert_eq!(max_size.as_bytes(), 5 * 1024 * 1024);
+}
+
+#[test]
+fn builder_with_max_file_size_and_rotation() {
+    // Test combining size-based and time-based rotation
+    let _plugin = Builder::new()
+        .with_file_logging()
+        .with_rotation(Rotation::Daily)
+        .with_max_file_size(MaxFileSize::mb(100))
+        .with_rotation_strategy(RotationStrategy::KeepSome(7))
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_max_file_size_full_config() {
+    // Test full configuration with size-based rotation
+    let _plugin = Builder::new()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .with_target("tao::platform_impl", LevelFilter::WARN)
+        .with_file_logging()
+        .with_rotation(Rotation::Hourly)
+        .with_max_file_size(MaxFileSize::mb(50))
+        .with_rotation_strategy(RotationStrategy::KeepSome(10))
         .with_default_subscriber()
         .build::<tauri::Wry>();
 }

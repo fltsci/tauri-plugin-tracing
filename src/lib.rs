@@ -334,6 +334,56 @@ pub enum RotationStrategy {
     KeepSome(u32),
 }
 
+/// Maximum file size for log rotation.
+///
+/// Provides convenient constructors for common size units.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, MaxFileSize};
+///
+/// Builder::new()
+///     .with_file_logging()
+///     .with_max_file_size(MaxFileSize::mb(10))  // Rotate at 10 MB
+///     .build()
+/// ```
+#[derive(Debug, Clone, Copy)]
+pub struct MaxFileSize(u64);
+
+impl MaxFileSize {
+    /// Creates a max file size from raw bytes.
+    pub const fn bytes(bytes: u64) -> Self {
+        Self(bytes)
+    }
+
+    /// Creates a max file size in kilobytes (KB).
+    pub const fn kb(kb: u64) -> Self {
+        Self(kb * 1024)
+    }
+
+    /// Creates a max file size in megabytes (MB).
+    pub const fn mb(mb: u64) -> Self {
+        Self(mb * 1024 * 1024)
+    }
+
+    /// Creates a max file size in gigabytes (GB).
+    pub const fn gb(gb: u64) -> Self {
+        Self(gb * 1024 * 1024 * 1024)
+    }
+
+    /// Returns the size in bytes.
+    pub const fn as_bytes(&self) -> u64 {
+        self.0
+    }
+}
+
+impl From<u64> for MaxFileSize {
+    fn from(bytes: u64) -> Self {
+        Self(bytes)
+    }
+}
+
 /// Stores the WorkerGuard to ensure logs are flushed on shutdown.
 /// This must be kept alive for the lifetime of the application.
 struct LogGuard(#[allow(dead_code)] Option<WorkerGuard>);
@@ -606,6 +656,7 @@ pub struct Builder {
     targets: Vec<Target>,
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
+    max_file_size: Option<MaxFileSize>,
     set_default_subscriber: bool,
     #[cfg(feature = "colored")]
     use_colors: bool,
@@ -620,6 +671,7 @@ impl Default for Builder {
             targets: vec![Target::Stdout, Target::Webview],
             rotation: Rotation::default(),
             rotation_strategy: RotationStrategy::default(),
+            max_file_size: None,
             set_default_subscriber: false,
             #[cfg(feature = "colored")]
             use_colors: false,
@@ -741,6 +793,32 @@ impl Builder {
     /// ```
     pub fn with_rotation_strategy(mut self, strategy: RotationStrategy) -> Self {
         self.rotation_strategy = strategy;
+        self
+    }
+
+    /// Sets the maximum file size before rotating.
+    ///
+    /// When set, log files will rotate when they reach this size, in addition
+    /// to any time-based rotation configured via [`with_rotation()`](Self::with_rotation).
+    ///
+    /// Use [`MaxFileSize`] for convenient size specification:
+    /// - `MaxFileSize::kb(100)` - 100 kilobytes
+    /// - `MaxFileSize::mb(10)` - 10 megabytes
+    /// - `MaxFileSize::gb(1)` - 1 gigabyte
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, MaxFileSize};
+    ///
+    /// // Rotate when file reaches 10 MB
+    /// Builder::new()
+    ///     .with_file_logging()
+    ///     .with_max_file_size(MaxFileSize::mb(10))
+    ///     .build()
+    /// ```
+    pub fn with_max_file_size(mut self, size: MaxFileSize) -> Self {
+        self.max_file_size = Some(size);
         self
     }
 
@@ -880,6 +958,11 @@ impl Builder {
         self.rotation_strategy
     }
 
+    /// Returns the configured maximum file size for rotation, if set.
+    pub fn configured_max_file_size(&self) -> Option<MaxFileSize> {
+        self.max_file_size
+    }
+
     /// Returns the configured filter based on log level and per-target settings.
     ///
     /// Use this when setting up your own subscriber to apply the same filtering
@@ -945,6 +1028,7 @@ impl Builder {
         let targets = self.targets;
         let rotation = self.rotation;
         let rotation_strategy = self.rotation_strategy;
+        let max_file_size = self.max_file_size;
         let set_default_subscriber = self.set_default_subscriber;
 
         #[cfg(feature = "colored")]
@@ -964,6 +1048,7 @@ impl Builder {
                         &targets,
                         rotation,
                         rotation_strategy,
+                        max_file_size,
                         #[cfg(feature = "colored")]
                         use_colors,
                     )?;
@@ -1059,6 +1144,7 @@ fn cleanup_logs_keeping(log_dir: &std::path::Path, file_prefix: &str, keep: usiz
 
 /// Sets up the tracing subscriber based on configured targets.
 #[cfg(desktop)]
+#[allow(clippy::too_many_arguments)]
 fn acquire_logger<R: Runtime>(
     app_handle: &AppHandle<R>,
     log_level: LevelFilter,
@@ -1066,6 +1152,7 @@ fn acquire_logger<R: Runtime>(
     targets: &[Target],
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
+    max_file_size: Option<MaxFileSize>,
     #[cfg(feature = "colored")] use_colors: bool,
 ) -> Result<Option<WorkerGuard>> {
     use std::io;
@@ -1117,26 +1204,71 @@ fn acquire_logger<R: Runtime>(
 
     // Set up file logging if configured
     let (file_layer, guard) = if let Some(config) = file_config {
-        cleanup_old_logs(&config.log_dir, &config.file_name, rotation_strategy)?;
+        // Note: cleanup_old_logs only works reliably with time-based rotation
+        // When using size-based rotation, files have numeric suffixes that may not sort correctly
+        if max_file_size.is_none() {
+            cleanup_old_logs(&config.log_dir, &config.file_name, rotation_strategy)?;
+        }
 
-        let file_appender = match rotation {
-            Rotation::Daily => tracing_appender::rolling::daily(&config.log_dir, &config.file_name),
-            Rotation::Hourly => {
-                tracing_appender::rolling::hourly(&config.log_dir, &config.file_name)
-            }
-            Rotation::Minutely => {
-                tracing_appender::rolling::minutely(&config.log_dir, &config.file_name)
-            }
-            Rotation::Never => tracing_appender::rolling::never(&config.log_dir, &config.file_name),
-        };
-        let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+        // Use rolling-file crate when max_file_size is set (supports both size and time-based rotation)
+        // Otherwise use tracing-appender (time-based only)
+        if let Some(max_size) = max_file_size {
+            use rolling_file::{BasicRollingFileAppender, RollingConditionBasic};
 
-        let layer = fmt::layer()
-            .with_ansi(false)
-            .with_target(true)
-            .with_writer(non_blocking);
+            // Build rolling condition with both time and size triggers
+            let mut condition = RollingConditionBasic::new();
+            condition = match rotation {
+                Rotation::Daily => condition.daily(),
+                Rotation::Hourly => condition.hourly(),
+                Rotation::Minutely => condition, // rolling-file doesn't have minutely, use size only
+                Rotation::Never => condition,    // size-only rotation
+            };
+            condition = condition.max_size(max_size.as_bytes());
 
-        (Some(layer), Some(guard))
+            // Determine max file count from rotation strategy
+            let max_files = match rotation_strategy {
+                RotationStrategy::KeepAll => u32::MAX as usize,
+                RotationStrategy::KeepOne => 1,
+                RotationStrategy::KeepSome(n) => n as usize,
+            };
+
+            let log_path = config.log_dir.join(format!("{}.log", config.file_name));
+            let file_appender = BasicRollingFileAppender::new(log_path, condition, max_files)
+                .map_err(std::io::Error::other)?;
+
+            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+
+            let layer = fmt::layer()
+                .with_ansi(false)
+                .with_target(true)
+                .with_writer(non_blocking);
+
+            (Some(layer), Some(guard))
+        } else {
+            // Time-based rotation only using tracing-appender
+            let file_appender = match rotation {
+                Rotation::Daily => {
+                    tracing_appender::rolling::daily(&config.log_dir, &config.file_name)
+                }
+                Rotation::Hourly => {
+                    tracing_appender::rolling::hourly(&config.log_dir, &config.file_name)
+                }
+                Rotation::Minutely => {
+                    tracing_appender::rolling::minutely(&config.log_dir, &config.file_name)
+                }
+                Rotation::Never => {
+                    tracing_appender::rolling::never(&config.log_dir, &config.file_name)
+                }
+            };
+            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+
+            let layer = fmt::layer()
+                .with_ansi(false)
+                .with_target(true)
+                .with_writer(non_blocking);
+
+            (Some(layer), Some(guard))
+        }
     } else {
         (None, None)
     };
