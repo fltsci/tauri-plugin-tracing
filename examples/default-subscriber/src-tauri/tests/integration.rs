@@ -308,3 +308,26 @@ fn record_payload_levels() {
         );
     }
 }
+
+#[test]
+fn builder_with_default_subscriber() {
+    // Test that with_default_subscriber() can be chained
+    let _plugin = Builder::new()
+        .with_max_level(LevelFilter::DEBUG)
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_default_subscriber_full_config() {
+    // Test full configuration with default subscriber (like this example uses)
+    let _plugin = Builder::new()
+        .with_colors()
+        .with_max_level(LevelFilter::TRACE)
+        .with_target("tao::platform_impl", LevelFilter::WARN)
+        .with_file_logging()
+        .with_rotation(Rotation::Daily)
+        .with_rotation_strategy(RotationStrategy::KeepSome(7))
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
