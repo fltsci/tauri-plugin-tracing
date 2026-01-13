@@ -4,25 +4,8 @@ var core = require('@tauri-apps/api/core');
 var event = require('@tauri-apps/api/event');
 
 /**
+ * Type definitions for the tracing plugin.
  * @module
- *
- * Tauri plugin for structured logging via the tracing crate.
- *
- * This module provides logging functions that bridge JavaScript logs to Rust's
- * tracing infrastructure, along with performance timing utilities.
- *
- * @example
- * ```ts
- * import { info, debug, error, time, timeEnd } from '@fltsci/tauri-plugin-tracing';
- *
- * info('Application started');
- * debug('Debug details', { user: 'alice' });
- * error('Something went wrong');
- *
- * time('operation');
- * // ... perform work ...
- * timeEnd('operation'); // Logs elapsed time
- * ```
  */
 /**
  * Log severity levels.
@@ -30,7 +13,7 @@ var event = require('@tauri-apps/api/event');
  * These levels correspond to the tracing crate's Level enum in Rust.
  * Lower values indicate more verbose (less severe) logs.
  */
-var LogLevel;
+exports.LogLevel = void 0;
 (function (LogLevel) {
     /**
      * The "trace" level.
@@ -62,7 +45,12 @@ var LogLevel;
      * Designates very serious errors.
      */
     LogLevel[LogLevel["Error"] = 5] = "Error";
-})(LogLevel || (LogLevel = {}));
+})(exports.LogLevel || (exports.LogLevel = {}));
+
+/**
+ * Utility functions for message formatting and sanitization.
+ * @module
+ */
 /**
  * Strips ANSI escape codes from a string.
  *
@@ -191,10 +179,16 @@ const cleanMessage = (message) => {
         }
     }
     else {
-        error(`Unhandled type: message is not a string, array, or object, message is ${typeof message}`);
+        // Import would cause circular dependency, log directly
+        console.error(`Unhandled type: message is not a string, array, or object, message is ${typeof message}`);
     }
     return safeMessage;
 };
+
+/**
+ * Logging functions for sending messages to the Rust backend.
+ * @module
+ */
 /**
  * Internal function to send a log message to the Rust backend.
  *
@@ -212,6 +206,109 @@ function log(level, ...msg) {
         callStack: new Error().stack
     }).catch(console.error);
 }
+/**
+ * Logs a message at the error level.
+ *
+ * Use for serious errors that require immediate attention.
+ *
+ * @param message - One or more values to log
+ *
+ * @example
+ * ```ts
+ * import { error } from '@fltsci/tauri-plugin-tracing';
+ *
+ * const err_info = "No connection";
+ * const port = 22;
+ *
+ * error(`Error: ${err_info} on port ${port}`);
+ * error('Multiple', 'arguments', { also: 'work' });
+ * ```
+ */
+function error(...message) {
+    log(exports.LogLevel.Error, ...message);
+}
+/**
+ * Logs a message at the warn level.
+ *
+ * Use for potentially hazardous situations that don't prevent operation.
+ *
+ * @param message - One or more values to log
+ *
+ * @example
+ * ```ts
+ * import { warn } from '@fltsci/tauri-plugin-tracing';
+ *
+ * const warn_description = "Invalid Input";
+ *
+ * warn(`Warning! ${warn_description}!`);
+ * ```
+ */
+function warn(...message) {
+    log(exports.LogLevel.Warn, ...message);
+}
+/**
+ * Logs a message at the info level.
+ *
+ * Use for general informational messages about application state.
+ *
+ * @param message - One or more values to log
+ *
+ * @example
+ * ```ts
+ * import { info } from '@fltsci/tauri-plugin-tracing';
+ *
+ * const conn_info = { port: 40, speed: 3.20 };
+ *
+ * info(`Connected to port ${conn_info.port} at ${conn_info.speed} Mb/s`);
+ * ```
+ */
+function info(...message) {
+    log(exports.LogLevel.Info, ...message);
+}
+/**
+ * Logs a message at the debug level.
+ *
+ * Use for detailed information useful during development and debugging.
+ *
+ * @param message - One or more values to log
+ *
+ * @example
+ * ```ts
+ * import { debug } from '@fltsci/tauri-plugin-tracing';
+ *
+ * const pos = { x: 3.234, y: -1.223 };
+ *
+ * debug(`New position: x: ${pos.x}, y: ${pos.y}`);
+ * ```
+ */
+function debug(...message) {
+    log(exports.LogLevel.Debug, ...message);
+}
+/**
+ * Logs a message at the trace level.
+ *
+ * Use for very verbose, low-priority information. Often filtered out
+ * in production builds.
+ *
+ * @param message - One or more values to log
+ *
+ * @example
+ * ```ts
+ * import { trace } from '@fltsci/tauri-plugin-tracing';
+ *
+ * const pos = { x: 3.234, y: -1.223 };
+ *
+ * trace(`Position is: x: ${pos.x}, y: ${pos.y}`);
+ * ```
+ */
+function trace(...message) {
+    log(exports.LogLevel.Trace, ...message);
+}
+
+/**
+ * Performance timing utilities.
+ * @module
+ */
 /**
  * Starts a performance timer with the given label.
  *
@@ -255,104 +352,11 @@ function timeEnd(label) {
         callStack: new Error().stack
     }).catch(console.error);
 }
+
 /**
- * Logs a message at the error level.
- *
- * Use for serious errors that require immediate attention.
- *
- * @param message - One or more values to log
- *
- * @example
- * ```ts
- * import { error } from '@fltsci/tauri-plugin-tracing';
- *
- * const err_info = "No connection";
- * const port = 22;
- *
- * error(`Error: ${err_info} on port ${port}`);
- * error('Multiple', 'arguments', { also: 'work' });
- * ```
+ * Event listeners for receiving logs from the Rust backend.
+ * @module
  */
-function error(...message) {
-    log(LogLevel.Error, ...message);
-}
-/**
- * Logs a message at the warn level.
- *
- * Use for potentially hazardous situations that don't prevent operation.
- *
- * @param message - One or more values to log
- *
- * @example
- * ```ts
- * import { warn } from '@fltsci/tauri-plugin-tracing';
- *
- * const warn_description = "Invalid Input";
- *
- * warn(`Warning! ${warn_description}!`);
- * ```
- */
-function warn(...message) {
-    log(LogLevel.Warn, ...message);
-}
-/**
- * Logs a message at the info level.
- *
- * Use for general informational messages about application state.
- *
- * @param message - One or more values to log
- *
- * @example
- * ```ts
- * import { info } from '@fltsci/tauri-plugin-tracing';
- *
- * const conn_info = { port: 40, speed: 3.20 };
- *
- * info(`Connected to port ${conn_info.port} at ${conn_info.speed} Mb/s`);
- * ```
- */
-function info(...message) {
-    log(LogLevel.Info, ...message);
-}
-/**
- * Logs a message at the debug level.
- *
- * Use for detailed information useful during development and debugging.
- *
- * @param message - One or more values to log
- *
- * @example
- * ```ts
- * import { debug } from '@fltsci/tauri-plugin-tracing';
- *
- * const pos = { x: 3.234, y: -1.223 };
- *
- * debug(`New position: x: ${pos.x}, y: ${pos.y}`);
- * ```
- */
-function debug(...message) {
-    log(LogLevel.Debug, ...message);
-}
-/**
- * Logs a message at the trace level.
- *
- * Use for very verbose, low-priority information. Often filtered out
- * in production builds.
- *
- * @param message - One or more values to log
- *
- * @example
- * ```ts
- * import { trace } from '@fltsci/tauri-plugin-tracing';
- *
- * const pos = { x: 3.234, y: -1.223 };
- *
- * trace(`Position is: x: ${pos.x}, y: ${pos.y}`);
- * ```
- */
-function trace(...message) {
-    log(LogLevel.Trace, ...message);
-}
 /**
  * Attaches a custom listener for log events from the Rust backend.
  *
@@ -406,19 +410,19 @@ async function attachLogger(fn) {
 async function attachConsole() {
     return await attachLogger(({ level, message }) => {
         switch (level) {
-            case LogLevel.Trace:
+            case exports.LogLevel.Trace:
                 console.log(message);
                 break;
-            case LogLevel.Debug:
+            case exports.LogLevel.Debug:
                 console.debug(message);
                 break;
-            case LogLevel.Info:
+            case exports.LogLevel.Info:
                 console.info(message);
                 break;
-            case LogLevel.Warn:
+            case exports.LogLevel.Warn:
                 console.warn(message);
                 break;
-            case LogLevel.Error:
+            case exports.LogLevel.Error:
                 console.error(message);
                 break;
             default:
@@ -431,6 +435,8 @@ exports.attachConsole = attachConsole;
 exports.attachLogger = attachLogger;
 exports.debug = debug;
 exports.error = error;
+exports.formatPrintf = formatPrintf;
+exports.getCircularReplacer = getCircularReplacer;
 exports.info = info;
 exports.time = time;
 exports.timeEnd = timeEnd;

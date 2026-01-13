@@ -2,25 +2,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 /**
+ * Type definitions for the tracing plugin.
  * @module
- *
- * Tauri plugin for structured logging via the tracing crate.
- *
- * This module provides logging functions that bridge JavaScript logs to Rust's
- * tracing infrastructure, along with performance timing utilities.
- *
- * @example
- * ```ts
- * import { info, debug, error, time, timeEnd } from '@fltsci/tauri-plugin-tracing';
- *
- * info('Application started');
- * debug('Debug details', { user: 'alice' });
- * error('Something went wrong');
- *
- * time('operation');
- * // ... perform work ...
- * timeEnd('operation'); // Logs elapsed time
- * ```
  */
 /**
  * Log severity levels.
@@ -61,6 +44,11 @@ var LogLevel;
      */
     LogLevel[LogLevel["Error"] = 5] = "Error";
 })(LogLevel || (LogLevel = {}));
+
+/**
+ * Utility functions for message formatting and sanitization.
+ * @module
+ */
 /**
  * Strips ANSI escape codes from a string.
  *
@@ -189,10 +177,16 @@ const cleanMessage = (message) => {
         }
     }
     else {
-        error(`Unhandled type: message is not a string, array, or object, message is ${typeof message}`);
+        // Import would cause circular dependency, log directly
+        console.error(`Unhandled type: message is not a string, array, or object, message is ${typeof message}`);
     }
     return safeMessage;
 };
+
+/**
+ * Logging functions for sending messages to the Rust backend.
+ * @module
+ */
 /**
  * Internal function to send a log message to the Rust backend.
  *
@@ -207,49 +201,6 @@ function log(level, ...msg) {
     invoke('plugin:tracing|log', {
         level,
         message,
-        callStack: new Error().stack
-    }).catch(console.error);
-}
-/**
- * Starts a performance timer with the given label.
- *
- * Similar to `console.time()`. Use {@link timeEnd} with the same label
- * to stop the timer and log the elapsed time.
- *
- * @param label - A unique identifier for this timer
- *
- * @example
- * ```ts
- * time('database-query');
- * const results = await db.query('SELECT * FROM users');
- * timeEnd('database-query'); // Logs: "database-query: 42.123ms"
- * ```
- */
-function time(label) {
-    invoke('plugin:tracing|time', {
-        label,
-        callStack: new Error().stack
-    }).catch(console.error);
-}
-/**
- * Stops a performance timer and logs the elapsed time.
- *
- * Similar to `console.timeEnd()`. Must be called with a label that was
- * previously started with {@link time}. Logs a warning if no timer
- * with the given label exists.
- *
- * @param label - The identifier of the timer to stop
- *
- * @example
- * ```ts
- * time('fetch-data');
- * const data = await fetch('/api/data');
- * timeEnd('fetch-data'); // Logs: "fetch-data: 156.789ms"
- * ```
- */
-function timeEnd(label) {
-    invoke('plugin:tracing|time_end', {
-        label,
         callStack: new Error().stack
     }).catch(console.error);
 }
@@ -351,6 +302,59 @@ function debug(...message) {
 function trace(...message) {
     log(LogLevel.Trace, ...message);
 }
+
+/**
+ * Performance timing utilities.
+ * @module
+ */
+/**
+ * Starts a performance timer with the given label.
+ *
+ * Similar to `console.time()`. Use {@link timeEnd} with the same label
+ * to stop the timer and log the elapsed time.
+ *
+ * @param label - A unique identifier for this timer
+ *
+ * @example
+ * ```ts
+ * time('database-query');
+ * const results = await db.query('SELECT * FROM users');
+ * timeEnd('database-query'); // Logs: "database-query: 42.123ms"
+ * ```
+ */
+function time(label) {
+    invoke('plugin:tracing|time', {
+        label,
+        callStack: new Error().stack
+    }).catch(console.error);
+}
+/**
+ * Stops a performance timer and logs the elapsed time.
+ *
+ * Similar to `console.timeEnd()`. Must be called with a label that was
+ * previously started with {@link time}. Logs a warning if no timer
+ * with the given label exists.
+ *
+ * @param label - The identifier of the timer to stop
+ *
+ * @example
+ * ```ts
+ * time('fetch-data');
+ * const data = await fetch('/api/data');
+ * timeEnd('fetch-data'); // Logs: "fetch-data: 156.789ms"
+ * ```
+ */
+function timeEnd(label) {
+    invoke('plugin:tracing|time_end', {
+        label,
+        callStack: new Error().stack
+    }).catch(console.error);
+}
+
+/**
+ * Event listeners for receiving logs from the Rust backend.
+ * @module
+ */
 /**
  * Attaches a custom listener for log events from the Rust backend.
  *
@@ -425,4 +429,4 @@ async function attachConsole() {
     });
 }
 
-export { attachConsole, attachLogger, debug, error, info, time, timeEnd, trace, warn };
+export { LogLevel, attachConsole, attachLogger, debug, error, formatPrintf, getCircularReplacer, info, time, timeEnd, trace, warn };
