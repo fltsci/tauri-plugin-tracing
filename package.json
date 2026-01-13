@@ -28,6 +28,8 @@
     "build": "rollup -c",
     "prepublishOnly": "pnpm build",
     "pretest": "pnpm build",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "biome lint --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -45,7 +47,8 @@
     "rollup": "4.53.3",
     "tslib": "2.8.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "8.49.0"
+    "typescript-eslint": "8.49.0",
+    "vitest": "^4.0.17"
   },
   "pnpm": {
     "overrides": {

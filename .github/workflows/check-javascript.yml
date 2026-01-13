@@ -1,11 +1,11 @@
-name: Lint JavaScript
+name: Check JavaScript
 
 on:
   push:
     branches:
       - main
     paths:
-      - '.github/workflows/lint-javascript.yml'
+      - '.github/workflows/check-javascript.yml'
       - 'guest-js/**'
       - '.eslintignore'
       - '.eslintrc.json'
@@ -15,7 +15,7 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/lint-javascript.yml'
+      - '.github/workflows/check-javascript.yml'
       - 'guest-js/**'
       - '.eslintignore'
       - '.eslintrc.json'
@@ -46,3 +46,23 @@ jobs:
       - run: pnpm i --frozen-lockfile
       - name: biome
         run: pnpm lint
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm i --frozen-lockfile
+      - name: vitest
+        run: pnpm test

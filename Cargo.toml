@@ -42,6 +42,7 @@ tracing-appender = "0.2.4"
 rolling-file = "0.2.0"
 tracing-core = "0.1.35"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter", "time"] }
+memchr = "2.7.4"
 colored = { version = "3.0.0" }
 specta = { version = "=2.0.0-rc.22", features = ["derive"] }
 ahash = { version = "0.8.12", features = ["serde"] }
@@ -61,6 +62,7 @@ tracing-appender.workspace = true
 rolling-file.workspace = true
 tracing-core.workspace = true
 tracing-subscriber.workspace = true
+memchr.workspace = true
 colored = { workspace = true, optional = true }
 specta = { workspace = true, optional = true }
 ahash = { workspace = true, optional = true }
