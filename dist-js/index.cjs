@@ -170,7 +170,9 @@ const cleanMessage = (message) => {
     }
     else if (Array.isArray(message)) {
         // Check if first argument is a string that might be a format string
-        if (message.length > 1 && typeof message[0] === 'string' && message[0].includes('%')) {
+        if (message.length > 1
+            && typeof message[0] === 'string'
+            && message[0].includes('%')) {
             const [formatted, remaining] = formatPrintf(message[0], message.slice(1));
             safeMessage.push(stripAnsi(formatted));
             for (const arg of remaining) {
