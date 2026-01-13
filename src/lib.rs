@@ -57,7 +57,7 @@
 //!
 //! ## File Logging
 //!
-//! File logging requires [`Builder::with_default_subscriber()`]:
+//! For simple file logging, use [`Builder::with_file_logging()`]:
 //!
 //! ```rust,no_run
 //! # use tauri_plugin_tracing::{Builder, LevelFilter};
@@ -68,10 +68,86 @@
 //!     .build::<tauri::Wry>();
 //! ```
 //!
+//! For custom subscribers, use [`tracing_appender`] directly (re-exported by this crate):
+//!
+//! ```rust,no_run
+//! # use tauri::Manager;
+//! # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, tracing_appender};
+//! # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+//! let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
+//! let filter = tracing_builder.build_filter();
+//!
+//! tauri::Builder::default()
+//!     .plugin(tracing_builder.build())
+//!     .setup(move |app| {
+//!         let log_dir = app.path().app_log_dir()?;
+//!         let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
+//!         let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+//!         // Store _guard in Tauri state to keep file logging active
+//!
+//!         let subscriber = Registry::default()
+//!             .with(fmt::layer())
+//!             .with(fmt::layer().with_ansi(false).with_writer(non_blocking))
+//!             .with(WebviewLayer::new(app.handle().clone()))
+//!             .with(filter);
+//!         tracing::subscriber::set_global_default(subscriber)?;
+//!         Ok(())
+//!     });
+//!     // .run(tauri::generate_context!())
+//! ```
+//!
 //! Log files rotate daily and are written to:
 //! - **macOS**: `~/Library/Logs/{bundle_identifier}/app.YYYY-MM-DD.log`
 //! - **Linux**: `~/.local/share/{bundle_identifier}/logs/app.YYYY-MM-DD.log`
 //! - **Windows**: `%LOCALAPPDATA%/{bundle_identifier}/logs/app.YYYY-MM-DD.log`
+//!
+//! ## Early Initialization
+//!
+//! For maximum control, initialize tracing before creating the Tauri app. This
+//! pattern uses [`tracing_subscriber::registry()`] with [`init()`](tracing_subscriber::util::SubscriberInitExt::init)
+//! and passes a minimal [`Builder`] to the plugin:
+//!
+//! ```rust,no_run
+//! use tauri_plugin_tracing::{Builder, StripAnsiWriter, tracing_appender};
+//! use tracing::Level;
+//! use tracing_subscriber::filter::Targets;
+//! use tracing_subscriber::layer::SubscriberExt;
+//! use tracing_subscriber::util::SubscriberInitExt;
+//! use tracing_subscriber::{fmt, registry};
+//!
+//! fn setup_logger() -> Builder {
+//!     let log_dir = std::env::temp_dir().join("my-app");
+//!     let _ = std::fs::create_dir_all(&log_dir);
+//!
+//!     let file_appender = tracing_appender::rolling::daily(&log_dir, "app");
+//!     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+//!     std::mem::forget(guard); // Keep file logging active for app lifetime
+//!
+//!     let targets = Targets::new()
+//!         .with_default(Level::DEBUG)
+//!         .with_target("hyper", Level::WARN)
+//!         .with_target("reqwest", Level::WARN);
+//!
+//!     registry()
+//!         .with(fmt::layer().with_ansi(true))
+//!         .with(fmt::layer().with_writer(StripAnsiWriter::new(non_blocking)).with_ansi(false))
+//!         .with(targets)
+//!         .init();
+//!
+//!     // Return minimal builder - logging is already configured
+//!     Builder::new()
+//! }
+//!
+//! fn main() {
+//!     let builder = setup_logger();
+//!     tauri::Builder::default()
+//!         .plugin(builder.build());
+//!         // .run(tauri::generate_context!())
+//! }
+//! ```
+//!
+//! This approach is useful when you need logging available before Tauri starts,
+//! or when you want full control over the subscriber configuration.
 //!
 //! ## JavaScript API
 //!
