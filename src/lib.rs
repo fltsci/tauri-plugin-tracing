@@ -384,6 +384,35 @@ impl From<u64> for MaxFileSize {
     }
 }
 
+/// Timezone strategy for log timestamps.
+///
+/// Controls whether log timestamps are displayed in UTC or local time.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{Builder, TimezoneStrategy};
+///
+/// Builder::new()
+///     .with_timezone_strategy(TimezoneStrategy::Local)
+///     .build()
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub enum TimezoneStrategy {
+    /// Use UTC timestamps (e.g., `2024-01-15T14:30:00.000000Z`).
+    ///
+    /// This is the default and most reliable option.
+    #[default]
+    Utc,
+
+    /// Use local timestamps with the system's timezone offset.
+    ///
+    /// The offset is captured when the logger is initialized. If the offset
+    /// cannot be determined (e.g., on some Unix systems with multiple threads),
+    /// falls back to UTC.
+    Local,
+}
+
 /// Stores the WorkerGuard to ensure logs are flushed on shutdown.
 /// This must be kept alive for the lifetime of the application.
 struct LogGuard(#[allow(dead_code)] Option<WorkerGuard>);
@@ -657,6 +686,7 @@ pub struct Builder {
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
     max_file_size: Option<MaxFileSize>,
+    timezone_strategy: TimezoneStrategy,
     set_default_subscriber: bool,
     #[cfg(feature = "colored")]
     use_colors: bool,
@@ -672,6 +702,7 @@ impl Default for Builder {
             rotation: Rotation::default(),
             rotation_strategy: RotationStrategy::default(),
             max_file_size: None,
+            timezone_strategy: TimezoneStrategy::default(),
             set_default_subscriber: false,
             #[cfg(feature = "colored")]
             use_colors: false,
@@ -822,6 +853,26 @@ impl Builder {
         self
     }
 
+    /// Sets the timezone strategy for log timestamps.
+    ///
+    /// Controls whether timestamps are displayed in UTC or local time.
+    /// The default is [`TimezoneStrategy::Utc`].
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::{Builder, TimezoneStrategy};
+    ///
+    /// // Use local time for timestamps
+    /// Builder::new()
+    ///     .with_timezone_strategy(TimezoneStrategy::Local)
+    ///     .build()
+    /// ```
+    pub fn with_timezone_strategy(mut self, strategy: TimezoneStrategy) -> Self {
+        self.timezone_strategy = strategy;
+        self
+    }
+
     /// Adds a log output target.
     ///
     /// By default, logs are sent to [`Target::Stdout`] and [`Target::Webview`].
@@ -963,6 +1014,11 @@ impl Builder {
         self.max_file_size
     }
 
+    /// Returns the configured timezone strategy for timestamps.
+    pub fn configured_timezone_strategy(&self) -> TimezoneStrategy {
+        self.timezone_strategy
+    }
+
     /// Returns the configured filter based on log level and per-target settings.
     ///
     /// Use this when setting up your own subscriber to apply the same filtering
@@ -1029,6 +1085,7 @@ impl Builder {
         let rotation = self.rotation;
         let rotation_strategy = self.rotation_strategy;
         let max_file_size = self.max_file_size;
+        let timezone_strategy = self.timezone_strategy;
         let set_default_subscriber = self.set_default_subscriber;
 
         #[cfg(feature = "colored")]
@@ -1049,6 +1106,7 @@ impl Builder {
                         rotation,
                         rotation_strategy,
                         max_file_size,
+                        timezone_strategy,
                         #[cfg(feature = "colored")]
                         use_colors,
                     )?;
@@ -1153,9 +1211,11 @@ fn acquire_logger<R: Runtime>(
     rotation: Rotation,
     rotation_strategy: RotationStrategy,
     max_file_size: Option<MaxFileSize>,
+    timezone_strategy: TimezoneStrategy,
     #[cfg(feature = "colored")] use_colors: bool,
 ) -> Result<Option<WorkerGuard>> {
     use std::io;
+    use tracing_subscriber::fmt::time::OffsetTime;
 
     let filter_with_default = filter.with_default(log_level);
 
@@ -1178,9 +1238,31 @@ fn acquire_logger<R: Runtime>(
     #[cfg(not(feature = "colored"))]
     let use_ansi = false;
 
+    // Helper to create timer based on timezone strategy
+    let make_timer = || match timezone_strategy {
+        TimezoneStrategy::Utc => OffsetTime::new(
+            time::UtcOffset::UTC,
+            time::format_description::well_known::Rfc3339,
+        ),
+        TimezoneStrategy::Local => time::UtcOffset::current_local_offset()
+            .map(|offset| OffsetTime::new(offset, time::format_description::well_known::Rfc3339))
+            .unwrap_or_else(|_| {
+                OffsetTime::new(
+                    time::UtcOffset::UTC,
+                    time::format_description::well_known::Rfc3339,
+                )
+            }),
+    };
+
     // Create optional layers based on targets
     let stdout_layer = if has_stdout {
-        Some(fmt::layer().with_ansi(use_ansi).with_target(true))
+        Some(
+            fmt::layer()
+                .with_timer(make_timer())
+                .with_ansi(use_ansi)
+                .with_target(true)
+                .boxed(),
+        )
     } else {
         None
     };
@@ -1188,9 +1270,11 @@ fn acquire_logger<R: Runtime>(
     let stderr_layer = if has_stderr {
         Some(
             fmt::layer()
+                .with_timer(make_timer())
                 .with_ansi(use_ansi)
                 .with_target(true)
-                .with_writer(io::stderr),
+                .with_writer(io::stderr)
+                .boxed(),
         )
     } else {
         None
@@ -1239,9 +1323,11 @@ fn acquire_logger<R: Runtime>(
             let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
             let layer = fmt::layer()
+                .with_timer(make_timer())
                 .with_ansi(false)
                 .with_target(true)
-                .with_writer(non_blocking);
+                .with_writer(non_blocking)
+                .boxed();
 
             (Some(layer), Some(guard))
         } else {
@@ -1263,9 +1349,11 @@ fn acquire_logger<R: Runtime>(
             let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
             let layer = fmt::layer()
+                .with_timer(make_timer())
                 .with_ansi(false)
                 .with_target(true)
-                .with_writer(non_blocking);
+                .with_writer(non_blocking)
+                .boxed();
 
             (Some(layer), Some(guard))
         }

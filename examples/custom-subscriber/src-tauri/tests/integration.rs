@@ -6,7 +6,7 @@
 use std::path::PathBuf;
 use tauri_plugin_tracing::{
     Builder, CallStack, CallStackLine, LevelFilter, LogLevel, MaxFileSize, Rotation,
-    RotationStrategy, Target,
+    RotationStrategy, Target, TimezoneStrategy,
 };
 
 #[test]
@@ -466,4 +466,41 @@ fn builder_with_max_file_size_and_rotation() {
         .with_max_file_size(MaxFileSize::mb(100))
         .with_rotation_strategy(RotationStrategy::KeepSome(7))
         .build::<tauri::Wry>();
+}
+
+#[test]
+fn timezone_strategy_default() {
+    // Default should be UTC
+    assert!(matches!(TimezoneStrategy::default(), TimezoneStrategy::Utc));
+}
+
+#[test]
+fn builder_with_timezone_strategy_utc() {
+    let _plugin = Builder::new()
+        .with_timezone_strategy(TimezoneStrategy::Utc)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_timezone_strategy_local() {
+    let _plugin = Builder::new()
+        .with_timezone_strategy(TimezoneStrategy::Local)
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_configured_timezone_strategy() {
+    // Default is UTC
+    let builder = Builder::new();
+    assert!(matches!(
+        builder.configured_timezone_strategy(),
+        TimezoneStrategy::Utc
+    ));
+
+    // After setting to Local
+    let builder = Builder::new().with_timezone_strategy(TimezoneStrategy::Local);
+    assert!(matches!(
+        builder.configured_timezone_strategy(),
+        TimezoneStrategy::Local
+    ));
 }
