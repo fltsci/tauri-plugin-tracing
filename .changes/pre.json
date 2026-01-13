@@ -20,6 +20,7 @@
     ".changes/inclue-window-name-in-tracing-logs.md",
     ".changes/move-to-github-packages.md",
     ".changes/patch-various-bugs.md",
+    ".changes/readme-update.md",
     ".changes/set-up-publish-jobs.md",
     ".changes/skip-version.md",
     ".changes/update-tauri-dependencies.md",
