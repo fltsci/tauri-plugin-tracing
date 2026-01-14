@@ -21,7 +21,12 @@ tauri-build = { default-features = false, features = [
 
 [dependencies]
 tauri.workspace = true
-tauri-plugin-tracing = { features = ["colored", "specta"], path = "../../../" }
+tauri-plugin-profiling = "0.1"
+tauri-plugin-tracing = { features = [
+  "colored",
+  "profiling",
+  "specta",
+], path = "../../../" }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 
