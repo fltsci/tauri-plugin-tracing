@@ -5,6 +5,7 @@
     ".changes/add-documentation.md",
     ".changes/add-file-logging.md",
     ".changes/add-filter.md",
+    ".changes/add-flamegraph-permissions.md",
     ".changes/add-flamegraph.md",
     ".changes/add-format.md",
     ".changes/add-log-rotation.md",
