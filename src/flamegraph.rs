@@ -1,7 +1,34 @@
-//! Flamegraph integration for performance profiling.
+//! Span timing visualization with flamegraphs and flamecharts.
 //!
-//! This module provides session-based profiling that records tracing spans
-//! and generates flamegraph/flamechart visualizations.
+//! This module records tracing span durations and generates interactive
+//! flamegraph/flamechart SVG visualizations using [`tracing-flame`] and [`inferno`].
+//!
+//! # What This Measures
+//!
+//! This feature captures **span durations (wall-clock time)**, not CPU time.
+//! Each span records the time from entry to exit, including any I/O waits,
+//! async awaits, or other blocking operations.
+//!
+//! **Good for:**
+//! - Understanding span hierarchy and call flow
+//! - Finding latency bottlenecks (where wall-clock time is spent)
+//! - Visualizing the structure of your application's execution
+//! - Identifying slow database queries, network requests, or file I/O
+//!
+//! **Not suitable for:**
+//! - Finding CPU-bound hotspots in compute-heavy code
+//! - Profiling async code where spans include I/O wait time
+//! - Optimizing tight loops or algorithmic performance
+//!
+//! # CPU Profiling Alternatives
+//!
+//! For actual CPU profiling (where CPU cycles are spent), use:
+//! - **macOS**: Instruments (Time Profiler) or [`samply`](https://github.com/mstange/samply)
+//! - **Linux**: `perf` or [`cargo-flamegraph`](https://github.com/flamegraph-rs/flamegraph)
+//! - **Cross-platform**: [`pprof-rs`](https://github.com/tikv/pprof-rs)
+//!
+//! [`tracing-flame`]: https://docs.rs/tracing-flame
+//! [`inferno`]: https://docs.rs/inferno
 //!
 //! # Usage
 //!
