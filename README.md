@@ -1,12 +1,18 @@
 # Tauri Plugin Tracing
 
+[![Crates.io](https://img.shields.io/crates/v/tauri-plugin-tracing.svg)](https://crates.io/crates/tauri-plugin-tracing)
+[![docs.rs](https://docs.rs/tauri-plugin-tracing/badge.svg)](https://docs.rs/tauri-plugin-tracing)
+[![npm](https://img.shields.io/npm/v/@fltsci/tauri-plugin-tracing.svg)](https://www.npmjs.com/package/@fltsci/tauri-plugin-tracing)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build Status](https://github.com/fltsci/tauri-plugin-tracing/actions/workflows/check-rust.yml/badge.svg)](https://github.com/fltsci/tauri-plugin-tracing/actions)
+
 Integrate Rust's `tracing` crate with your Tauri app. Bridge logs between Rust and JavaScript with support for file rotation, custom layers, and span visualization.
 
 ## Installation
 
 ```toml
 [dependencies]
-tauri-plugin-tracing = "0.2"
+tauri-plugin-tracing = "0.3"
 ```
 
 ```bash
