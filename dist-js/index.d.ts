@@ -18,5 +18,6 @@
 export { LogLevel, type LogMessage, type LoggerFn, type RecordPayload } from './types';
 export { trace, debug, info, warn, error } from './log';
 export { attachLogger, attachConsole } from './listener';
+export { interceptConsole, restoreConsole, takeoverConsole } from './console';
 export { formatPrintf, getCircularReplacer } from './utils';
 export { generateFlamegraph, generateFlamechart } from './flamegraph';

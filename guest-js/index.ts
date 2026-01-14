@@ -30,6 +30,9 @@ export { trace, debug, info, warn, error } from './log'
 // Re-export listener functions
 export { attachLogger, attachConsole } from './listener'
 
+// Re-export console interception
+export { interceptConsole, restoreConsole, takeoverConsole } from './console'
+
 // Re-export utilities (for testing and advanced usage)
 export { formatPrintf, getCircularReplacer } from './utils'
 
