@@ -2,6 +2,36 @@
 
 A Tauri plugin that integrates the Rust `tracing` crate for structured logging, bridging logs between your Rust backend and JavaScript frontend.
 
+## Why tauri-plugin-tracing?
+
+This plugin provides everything `tauri-plugin-log` offers, plus advanced capabilities from the `tracing` ecosystem.
+
+### Feature Comparison
+
+| Feature | tauri-plugin-log | tauri-plugin-tracing |
+|---------|------------------|----------------------|
+| Log levels (trace/debug/info/warn/error) | ✓ | ✓ |
+| Console output (stdout/stderr) | ✓ | ✓ |
+| File logging with rotation | ✓ | ✓ |
+| Forward logs to webview | ✓ | ✓ |
+| Per-module filtering | ✓ | ✓ |
+| Colored output | ✓ | ✓ |
+| Custom log formats | ✓ | ✓ |
+| Size-based rotation | ✓ | ✓ |
+| **Structured span context** | | ✓ |
+| **Custom tracing layers** | | ✓ |
+| **OpenTelemetry integration** | | ✓ |
+| **Flamegraph profiling** | | ✓ |
+| **Early initialization** | | ✓ |
+
+### Additional Features
+
+- **Structured Spans**: Track execution context across async boundaries with `tracing` spans
+- **Custom Layers**: Add OpenTelemetry, Sentry, or any `tracing-subscriber` layer
+- **Flamegraph Profiling**: Generate interactive flamegraphs and flamecharts from your app
+- **Early Initialization**: Set up logging before Tauri starts for complete startup tracing
+- **ANSI Stripping**: `StripAnsiWriter` removes color codes when writing to files
+
 ## Installation
 
 ### Rust
