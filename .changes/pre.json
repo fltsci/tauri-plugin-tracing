@@ -19,6 +19,7 @@
     ".changes/add-webview-layer.md",
     ".changes/auto-docs-upload.md",
     ".changes/fine-tune-ci-workflows.md",
+    ".changes/fix-doc-links.md",
     ".changes/fix-doctests.md",
     ".changes/fix-empty-call-stack.md",
     ".changes/fix-file-logging-docs.md",

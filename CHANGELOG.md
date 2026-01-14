@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.15]
+
+- [`fe47ac1`](https://github.com/fltsci/tauri-plugin-tracing/commit/fe47ac1a49f9292c78b3b96f909bb9e4cec1a428) ([#71](https://github.com/fltsci/tauri-plugin-tracing/pull/71) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix broken rustdoc intra-doc links.
+
 ## \[0.2.0-canary.14]
 
 - [`075cdbd`](https://github.com/fltsci/tauri-plugin-tracing/commit/075cdbd300eb064d361faff9d82c54e9274af0ad) ([#57](https://github.com/fltsci/tauri-plugin-tracing/pull/57) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add flamegraph profiling support via new `flamegraph` feature. Enable span recording with `with_flamegraph()` builder method, then generate visualizations using `generateFlamegraph()` (collapses identical stacks) or `generateFlamechart()` (preserves event ordering) from JavaScript.
