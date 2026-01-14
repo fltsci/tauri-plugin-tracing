@@ -1,3 +1,4 @@
+#![allow(clippy::expect_used)] // Standard Tauri app entry point pattern
 use tauri::Manager;
 use tauri_plugin_tracing::{LevelFilter, WebviewLayer, tracing_appender};
 use tracing_appender::non_blocking::WorkerGuard;

@@ -113,6 +113,7 @@ impl<'a, W: Write + 'a> tracing_subscriber::fmt::MakeWriter<'a> for StripAnsiWri
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
     use tracing_subscriber::fmt::MakeWriter;

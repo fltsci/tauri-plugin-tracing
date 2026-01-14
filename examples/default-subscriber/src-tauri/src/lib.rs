@@ -1,3 +1,4 @@
+#![allow(clippy::expect_used)] // Standard Tauri app entry point pattern
 use tauri_plugin_tracing::{LevelFilter, Rotation, RotationStrategy};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

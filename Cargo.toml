@@ -24,6 +24,13 @@ macos = { level = "full", notes = "" }
 android = { level = "unknown", notes = "" }
 ios = { level = "unknown", notes = "" }
 
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
+[lints]
+workspace = true
+
 [build-dependencies]
 tauri-plugin = { version = "2.5.2", features = ["build"] }
 

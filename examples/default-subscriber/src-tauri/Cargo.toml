@@ -7,6 +7,9 @@ license = "MIT"
 repository = ""
 edition = "2024"
 
+[lints]
+workspace = true
+
 [lib]
 name = "example_default_subscriber_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
