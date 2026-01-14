@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.19]
+
+- [`7099260`](https://github.com/fltsci/tauri-plugin-tracing/commit/70992603fbf50a40968fe0b475725f0b0453793f) ([#80](https://github.com/fltsci/tauri-plugin-tracing/pull/80) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add `takeoverConsole()` function that completely takes over the webview console, routing all logs through Rust tracing and back to the original console methods.
+
 ## \[0.2.0-canary.18]
 
 - [`680f9c9`](https://github.com/fltsci/tauri-plugin-tracing/commit/680f9c9b39207db5964f297a792402a45044f637) ([#78](https://github.com/fltsci/tauri-plugin-tracing/pull/78) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add clippy lints to deny `unwrap()` and `expect()` in production code, preventing accidental panics.

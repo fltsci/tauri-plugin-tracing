@@ -32,6 +32,7 @@
     ".changes/readme-update.md",
     ".changes/set-up-publish-jobs.md",
     ".changes/skip-version.md",
+    ".changes/takeover-console.md",
     ".changes/update-tauri-dependencies.md",
     ".changes/update-timing-behavior.md",
     ".changes/use-async-mutex.md",
