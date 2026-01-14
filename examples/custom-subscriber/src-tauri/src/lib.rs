@@ -42,7 +42,9 @@ pub fn run() {
                 .init();
 
             #[cfg(debug_assertions)]
-            app.get_webview_window("main").unwrap().open_devtools();
+            if let Some(window) = app.get_webview_window("main") {
+                window.open_devtools();
+            }
 
             tracing::info!(log_dir = %log_dir.display(), "App initialized with custom subscriber and file logging");
             Ok(())
