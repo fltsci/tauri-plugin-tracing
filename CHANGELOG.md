@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.2.0-canary.20]
+
+- [`061b015`](https://github.com/fltsci/tauri-plugin-tracing/commit/061b0159e4b69055d6adfa98a3c40712640fc58b) ([#84](https://github.com/fltsci/tauri-plugin-tracing/pull/84) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Clarify that the flamegraph feature measures span timing (wall-clock time), not CPU time. Updated documentation with appropriate use cases and limitations.
+- [`675d209`](https://github.com/fltsci/tauri-plugin-tracing/commit/675d2095ae6edb7d4333cd5225d29c3914d39469) ([#82](https://github.com/fltsci/tauri-plugin-tracing/pull/82) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Switch to public package publishing: Rust on crates.io, npm with public access.
+
 ## \[0.2.0-canary.19]
 
 - [`7099260`](https://github.com/fltsci/tauri-plugin-tracing/commit/70992603fbf50a40968fe0b475725f0b0453793f) ([#80](https://github.com/fltsci/tauri-plugin-tracing/pull/80) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add `takeoverConsole()` function that completely takes over the webview console, routing all logs through Rust tracing and back to the original console methods.
