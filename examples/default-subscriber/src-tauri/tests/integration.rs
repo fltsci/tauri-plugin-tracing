@@ -778,7 +778,10 @@ fn create_flame_layer_with_path_creates_layer() {
     let _ = std::fs::remove_file(&folded_path);
 
     let result = create_flame_layer_with_path(&folded_path);
-    assert!(result.is_ok(), "create_flame_layer_with_path should succeed");
+    assert!(
+        result.is_ok(),
+        "create_flame_layer_with_path should succeed"
+    );
 
     let (_layer, guard) = result.unwrap();
 
@@ -828,7 +831,7 @@ fn create_flame_layer_with_path_creates_parent_dirs() {
 
 #[test]
 fn flame_guard_is_send_and_sync() {
-    use tauri_plugin_tracing::{create_flame_layer_with_path, FlameGuard};
+    use tauri_plugin_tracing::{FlameGuard, create_flame_layer_with_path};
 
     // Compile-time check that FlameGuard is Send + Sync
     fn assert_send_sync<T: Send + Sync>() {}
