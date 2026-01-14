@@ -2,6 +2,36 @@
 
 A Tauri plugin that integrates the Rust `tracing` crate for structured logging, bridging logs between your Rust backend and JavaScript frontend.
 
+## Why tauri-plugin-tracing?
+
+This plugin provides everything `tauri-plugin-log` offers, plus advanced capabilities from the `tracing` ecosystem.
+
+### Feature Comparison
+
+| Feature | tauri-plugin-log | tauri-plugin-tracing |
+|---------|------------------|----------------------|
+| Log levels (trace/debug/info/warn/error) | ✓ | ✓ |
+| Console output (stdout/stderr) | ✓ | ✓ |
+| File logging with rotation | ✓ | ✓ |
+| Forward logs to webview | ✓ | ✓ |
+| Per-module filtering | ✓ | ✓ |
+| Colored output | ✓ | ✓ |
+| Custom log formats | ✓ | ✓ |
+| Size-based rotation | ✓ | ✓ |
+| **Structured span context** | | ✓ |
+| **Custom tracing layers** | | ✓ |
+| **OpenTelemetry integration** | | ✓ |
+| **Flamegraph profiling** | | ✓ |
+| **Early initialization** | | ✓ |
+
+### Additional Features
+
+- **Structured Spans**: Track execution context across async boundaries with `tracing` spans
+- **Custom Layers**: Add OpenTelemetry, Sentry, or any `tracing-subscriber` layer
+- **Flamegraph Profiling**: Generate interactive flamegraphs and flamecharts from your app
+- **Early Initialization**: Set up logging before Tauri starts for complete startup tracing
+- **ANSI Stripping**: `StripAnsiWriter` removes color codes when writing to files
+
 ## Installation
 
 ### Rust
@@ -133,12 +163,76 @@ Builder::new()
 
 Requires the `flamegraph` feature.
 
+**With default subscriber:**
+
 ```rust
 Builder::new()
     .with_flamegraph()
     .with_default_subscriber()
     .build()
 ```
+
+**With custom subscriber:**
+
+```rust
+use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, create_flame_layer};
+use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
+
+let builder = Builder::new().with_max_level(LevelFilter::DEBUG);
+let filter = builder.build_filter();
+
+tauri::Builder::default()
+    .plugin(builder.build())
+    .setup(move |app| {
+        let flame_layer = create_flame_layer(app.handle())?;
+
+        Registry::default()
+            .with(fmt::layer())
+            .with(WebviewLayer::new(app.handle().clone()))
+            .with(flame_layer)
+            .with(filter)
+            .init();
+        Ok(())
+    })
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+```
+
+**Early initialization (before Tauri starts):**
+
+```rust
+use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
+use tracing_subscriber::{registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
+
+fn main() {
+    let log_dir = std::env::temp_dir().join("my-app");
+    std::fs::create_dir_all(&log_dir).unwrap();
+
+    // Create flame layer before Tauri starts
+    let (flame_layer, flame_guard) = create_flame_layer_with_path(
+        &log_dir.join("profile.folded")
+    ).unwrap();
+
+    // Initialize tracing early
+    registry()
+        .with(fmt::layer())
+        .with(flame_layer)
+        .init();
+
+    // Now start Tauri and register the guard
+    tauri::Builder::default()
+        .plugin(Builder::new().build())
+        .setup(move |app| {
+            // Register the guard so JS can generate flamegraphs
+            app.handle().register_flamegraph(flame_guard)?;
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+```
+
+**Generate visualizations from JavaScript:**
 
 ```typescript
 import { generateFlamegraph, generateFlamechart } from '@fltsci/tauri-plugin-tracing';
@@ -156,7 +250,7 @@ For advanced use cases, compose your own subscriber:
 
 ```rust
 use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 
 let builder = Builder::new()
     .with_max_level(LevelFilter::DEBUG)
@@ -167,11 +261,11 @@ let filter = builder.build_filter();
 tauri::Builder::default()
     .plugin(builder.build())
     .setup(move |app| {
-        let subscriber = Registry::default()
+        Registry::default()
             .with(fmt::layer())
             .with(WebviewLayer::new(app.handle().clone()))
-            .with(filter);
-        tracing::subscriber::set_global_default(subscriber)?;
+            .with(filter)
+            .init();
         Ok(())
     })
     .run(tauri::generate_context!())
@@ -183,8 +277,9 @@ tauri::Builder::default()
 Use `tracing_appender` (re-exported by this crate) for file logging with custom subscribers:
 
 ```rust
+use tauri::Manager;
 use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, tracing_appender};
-use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 
 let builder = Builder::new().with_max_level(LevelFilter::DEBUG);
 let filter = builder.build_filter();
@@ -199,12 +294,12 @@ tauri::Builder::default()
         // Store guard in Tauri state to keep file logging active
         app.manage(guard);
 
-        let subscriber = Registry::default()
+        Registry::default()
             .with(fmt::layer())
             .with(fmt::layer().with_ansi(false).with_writer(non_blocking))
             .with(WebviewLayer::new(app.handle().clone()))
-            .with(filter);
-        tracing::subscriber::set_global_default(subscriber)?;
+            .with(filter)
+            .init();
         Ok(())
     })
     .run(tauri::generate_context!())

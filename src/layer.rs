@@ -57,7 +57,7 @@ pub struct RecordPayload {
 ///
 /// ```rust,no_run
 /// # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-/// # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+/// # use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 /// let builder = Builder::new()
 ///     .with_max_level(LevelFilter::DEBUG);
 /// let filter = builder.build_filter();
@@ -65,11 +65,11 @@ pub struct RecordPayload {
 /// tauri::Builder::default()
 ///     .plugin(builder.build())
 ///     .setup(move |app| {
-///         let subscriber = Registry::default()
+///         Registry::default()
 ///             .with(fmt::layer())
 ///             .with(WebviewLayer::new(app.handle().clone()))
-///             .with(filter);
-///         tracing::subscriber::set_global_default(subscriber)?;
+///             .with(filter)
+///             .init();
 ///         Ok(())
 ///     });
 ///     // .run(tauri::generate_context!())

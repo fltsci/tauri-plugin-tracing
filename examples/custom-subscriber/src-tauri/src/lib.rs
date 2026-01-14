@@ -1,7 +1,7 @@
 use tauri::Manager;
 use tauri_plugin_tracing::{LevelFilter, WebviewLayer, tracing_appender};
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{Registry, fmt, layer::SubscriberExt};
+use tracing_subscriber::{Registry, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -32,16 +32,14 @@ pub fn run() {
             // Set up our own subscriber with custom layers.
             // This approach allows adding additional layers like OpenTelemetry,
             // custom formatters, or other tracing integrations.
-            let subscriber = Registry::default()
+            Registry::default()
                 .with(fmt::layer()) // stdout
                 .with(fmt::layer().with_ansi(false).with_writer(non_blocking)) // file
                 .with(WebviewLayer::new(app.handle().clone()))
                 // Add your custom layers here, e.g.:
                 // .with(tracing_opentelemetry::layer())
-                .with(filter);
-
-            tracing::subscriber::set_global_default(subscriber)
-                .expect("failed to set global subscriber");
+                .with(filter)
+                .init();
 
             #[cfg(debug_assertions)]
             app.get_webview_window("main").unwrap().open_devtools();

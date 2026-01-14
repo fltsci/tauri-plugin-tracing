@@ -5,23 +5,32 @@
 //!
 //! # Usage
 //!
-//! Enable the `flamegraph` feature and use the profiling API:
+//! Enable the `flamegraph` feature and use the profiling API.
 //!
-//! ```javascript
-//! import { startProfiling, stopProfiling } from '@fltsci/tauri-plugin-tracing';
+//! ## With AppHandle (in Tauri setup)
 //!
-//! // Start recording
-//! await startProfiling();
+//! ```rust,ignore
+//! let flame_layer = create_flame_layer(app.handle())?;
+//! ```
 //!
-//! // ... perform operations to profile ...
+//! ## Early Initialization (before Tauri)
 //!
-//! // Stop recording and generate flamegraph SVG
-//! const svgPath = await stopProfiling();
+//! ```rust,ignore
+//! use tauri_plugin_tracing::{create_flame_layer_with_path, FlameExt};
+//!
+//! // Create layer before Tauri starts
+//! let (flame_layer, flame_guard) = create_flame_layer_with_path(&log_dir.join("profile.folded"))?;
+//!
+//! // Add to your subscriber
+//! registry().with(flame_layer).init();
+//!
+//! // Later, in Tauri setup, register the guard so JS commands work
+//! app.handle().register_flamegraph(flame_guard)?;
 //! ```
 
 use std::fs::File;
 use std::io::BufWriter;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager, Runtime};
 use tracing_flame::FlushGuard;
@@ -54,6 +63,100 @@ pub fn setup_flamegraph<R: Runtime>(app: &AppHandle<R>) {
 /// A boxed FlameLayer that can be added to the subscriber.
 pub type BoxedFlameLayer =
     Box<dyn tracing_subscriber::Layer<tracing_subscriber::Registry> + Send + Sync + 'static>;
+
+/// A guard that holds the flamegraph flush guard and output path.
+///
+/// Use this with [`FlameExt::register_flamegraph`] to enable flamegraph generation
+/// from the frontend after early initialization.
+pub struct FlameGuard {
+    guard: FlushGuard<BufWriter<File>>,
+    folded_path: PathBuf,
+}
+
+/// Creates a new FlameLayer with a custom output path.
+///
+/// This function does not require a Tauri [`AppHandle`], making it suitable for
+/// early initialization before Tauri starts.
+///
+/// Returns the layer and a [`FlameGuard`] that must be registered with Tauri
+/// using [`FlameExt::register_flamegraph`] to enable frontend flamegraph generation.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use tauri_plugin_tracing::{create_flame_layer_with_path, FlameExt};
+/// use tracing_subscriber::{registry, layer::SubscriberExt, util::SubscriberInitExt};
+///
+/// let log_dir = std::env::temp_dir().join("my-app");
+/// std::fs::create_dir_all(&log_dir)?;
+///
+/// let (flame_layer, flame_guard) = create_flame_layer_with_path(&log_dir.join("profile.folded"))?;
+///
+/// registry()
+///     .with(tracing_subscriber::fmt::layer())
+///     .with(flame_layer)
+///     .init();
+///
+/// // Later, in Tauri setup:
+/// // app.handle().register_flamegraph(flame_guard)?;
+/// ```
+pub fn create_flame_layer_with_path(folded_path: &Path) -> Result<(BoxedFlameLayer, FlameGuard)> {
+    use tracing_subscriber::Layer;
+
+    if let Some(parent) = folded_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let (layer, guard) = tracing_flame::FlameLayer::with_file(folded_path)
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
+
+    let flame_guard = FlameGuard {
+        guard,
+        folded_path: folded_path.to_path_buf(),
+    };
+
+    Ok((layer.boxed(), flame_guard))
+}
+
+/// Extension trait for registering flamegraph state with a Tauri application.
+///
+/// This trait is implemented for [`AppHandle`] and allows registering a [`FlameGuard`]
+/// after early initialization, enabling frontend flamegraph generation.
+pub trait FlameExt<R: Runtime> {
+    /// Registers a [`FlameGuard`] with the application state.
+    ///
+    /// This must be called in Tauri's setup hook to enable `generateFlamegraph()`
+    /// and `generateFlamechart()` from the frontend.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::FlameExt;
+    ///
+    /// tauri::Builder::default()
+    ///     .plugin(tauri_plugin_tracing::Builder::new().build())
+    ///     .setup(move |app| {
+    ///         app.handle().register_flamegraph(flame_guard)?;
+    ///         Ok(())
+    ///     })
+    /// ```
+    fn register_flamegraph(&self, guard: FlameGuard) -> Result<()>;
+}
+
+impl<R: Runtime> FlameExt<R> for AppHandle<R> {
+    fn register_flamegraph(&self, guard: FlameGuard) -> Result<()> {
+        let state = self.state::<FlameState>();
+        *state
+            .guard
+            .lock()
+            .map_err(|e| crate::Error::LockPoisoned(e.to_string()))? = Some(guard.guard);
+        *state
+            .folded_path
+            .lock()
+            .map_err(|e| crate::Error::LockPoisoned(e.to_string()))? = Some(guard.folded_path);
+        Ok(())
+    }
+}
 
 /// Creates a new FlameLayer for the given app handle.
 ///
