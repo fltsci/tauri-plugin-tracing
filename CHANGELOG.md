@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.16]
+
+- [`1bea996`](https://github.com/fltsci/tauri-plugin-tracing/commit/1bea996fe8a9f6e677151c124bfb10e4db4d1615) ([#74](https://github.com/fltsci/tauri-plugin-tracing/pull/74) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add ACL permissions for flamegraph commands.
+
 ## \[0.2.0-canary.15]
 
 - [`fe47ac1`](https://github.com/fltsci/tauri-plugin-tracing/commit/fe47ac1a49f9292c78b3b96f909bb9e4cec1a428) ([#71](https://github.com/fltsci/tauri-plugin-tracing/pull/71) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Fix broken rustdoc intra-doc links.
