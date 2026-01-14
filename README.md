@@ -21,14 +21,14 @@ This plugin provides everything `tauri-plugin-log` offers, plus advanced capabil
 | **Structured span context** | | ✓ |
 | **Custom tracing layers** | | ✓ |
 | **OpenTelemetry integration** | | ✓ |
-| **Flamegraph profiling** | | ✓ |
+| **Span timing visualization** | | ✓ |
 | **Early initialization** | | ✓ |
 
 ### Additional Features
 
 - **Structured Spans**: Track execution context across async boundaries with `tracing` spans
 - **Custom Layers**: Add OpenTelemetry, Sentry, or any `tracing-subscriber` layer
-- **Flamegraph Profiling**: Generate interactive flamegraphs and flamecharts from your app
+- **Span Timing Visualization**: Generate flamegraphs/flamecharts showing span durations and call hierarchy
 - **Early Initialization**: Set up logging before Tauri starts for complete startup tracing
 - **ANSI Stripping**: `StripAnsiWriter` removes color codes when writing to files
 
@@ -85,7 +85,7 @@ error('Something went wrong');
 
 - **`colored`** - ANSI color output in terminal
 - **`specta`** - TypeScript type generation
-- **`flamegraph`** - Performance profiling with flamegraph/flamechart generation
+- **`flamegraph`** - Span timing visualization with flamegraph/flamechart SVG generation
 
 ### Log Targets
 
@@ -159,9 +159,13 @@ Builder::new()
     .build()
 ```
 
-### Performance Profiling
+### Span Timing Visualization
 
 Requires the `flamegraph` feature.
+
+> **Note:** This captures span durations (wall-clock time), not CPU time. It's useful for
+> understanding call hierarchy and finding latency bottlenecks, but not for CPU profiling.
+> For CPU profiling, use Instruments (macOS), `perf` (Linux), or `samply`.
 
 **With default subscriber:**
 
@@ -237,10 +241,10 @@ fn main() {
 ```typescript
 import { generateFlamegraph, generateFlamechart } from '@fltsci/tauri-plugin-tracing';
 
-// Generate a flamegraph (collapses identical stack frames)
+// Generate a flamegraph (collapses identical stack frames, shows cumulative time)
 const flamegraphPath = await generateFlamegraph();
 
-// Generate a flamechart (preserves event ordering)
+// Generate a flamechart (preserves chronological ordering)
 const flamechartPath = await generateFlamechart();
 ```
 
