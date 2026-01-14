@@ -20,8 +20,8 @@
           "pipe": true
         },
         {
-          "command": "npm publish --access restricted --tag '${ pkgFile.pkg.version.split('-')[1].split('.')[0] ?? 'latest' }'",
-          "dryRunCommand": "npm publish --access restricted --tag '${ pkgFile.pkg.version.split('-')[1].split('.')[0] ?? 'latest' }' --dry-run",
+          "command": "npm publish --access public --tag '${ pkgFile.pkg.version.split('-')[1]?.split('.')[0] ?? 'latest' }'",
+          "dryRunCommand": "npm publish --access public --tag '${ pkgFile.pkg.version.split('-')[1]?.split('.')[0] ?? 'latest' }' --dry-run",
           "pipe": true
         },
         {
@@ -36,7 +36,7 @@
       "getPublishedVersion": {
         "use": "fetch:check",
         "options": {
-          "url": "https://crates.newearth.llc/api/v1/crates/${ pkg.pkgFile.pkg.package.name }/${ pkg.pkgFile.version }"
+          "url": "https://crates.io/api/v1/crates/${ pkg.pkgFile.pkg.package.name }/${ pkg.pkgFile.version }"
         }
       },
       "publish": [
@@ -46,8 +46,8 @@
           "pipe": true
         },
         {
-          "command": "cargo publish --allow-dirty --no-verify --registry kellnr",
-          "dryRunCommand": "cargo publish --dry-run --registry kellnr",
+          "command": "cargo publish --allow-dirty --no-verify",
+          "dryRunCommand": "cargo publish --dry-run",
           "pipe": true
         },
         {

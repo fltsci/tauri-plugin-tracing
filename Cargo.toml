@@ -15,7 +15,6 @@ repository = "https://github.com/fltsci/tauri-plugin-tracing"
 description = "Use the tracing crate in your Tauri app"
 links = "tauri-plugin-tracing"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
-publish = ["kellnr"]
 
 [workspace.metadata.platforms.support]
 windows = { level = "unknown", notes = "" }
