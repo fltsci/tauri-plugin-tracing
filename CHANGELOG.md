@@ -1,5 +1,15 @@
 # Changelog
 
+## \[0.2.0-canary.17]
+
+- [`60897d0`](https://github.com/fltsci/tauri-plugin-tracing/commit/60897d067e62e23677aecdc565090b6681dba9f4) ([#76](https://github.com/fltsci/tauri-plugin-tracing/pull/76) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add flamegraph support for custom subscribers and early initialization:
+
+  - `create_flame_layer_with_path()` creates a flame layer without requiring an AppHandle
+  - `FlameGuard` struct holds the flush guard and output path
+  - `FlameExt` trait adds `register_flamegraph()` to AppHandle for late registration
+
+  This enables initializing tracing before Tauri starts while still supporting frontend flamegraph generation.
+
 ## \[0.2.0-canary.16]
 
 - [`1bea996`](https://github.com/fltsci/tauri-plugin-tracing/commit/1bea996fe8a9f6e677151c124bfb10e4db4d1615) ([#74](https://github.com/fltsci/tauri-plugin-tracing/pull/74) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add ACL permissions for flamegraph commands.
