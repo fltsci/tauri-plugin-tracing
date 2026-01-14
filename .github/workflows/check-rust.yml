@@ -102,3 +102,6 @@ jobs:
 
       - name: test workspace --all-features
         run: cargo nextest run --workspace --all-features
+
+      - name: doc tests
+        run: cargo test --doc --all-features
