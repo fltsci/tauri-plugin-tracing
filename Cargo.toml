@@ -46,11 +46,8 @@ memchr = "2.7.4"
 colored = { version = "3.0.0" }
 specta = { version = "=2.0.0-rc.22", features = ["derive"] }
 ahash = { version = "0.8.12", features = ["serde"] }
-compact_str = { version = "0.9.0", features = ["serde"] }
-async-trait = "0.1.89"
 
 [dependencies]
-async-trait.workspace = true
 serde.workspace = true
 tauri.workspace = true
 thiserror.workspace = true
@@ -65,8 +62,8 @@ tracing-subscriber.workspace = true
 memchr.workspace = true
 colored = { workspace = true, optional = true }
 specta = { workspace = true, optional = true }
-ahash = { workspace = true, optional = true }
-compact_str = { workspace = true, optional = true }
+tracing-flame = { version = "0.2", optional = true }
+inferno = { version = "0.12", default-features = false, optional = true }
 
 
 # default to small, optimized release binaries
@@ -81,7 +78,7 @@ opt-level = "s"
 default = []
 colored = ["dep:colored", "tracing-subscriber/ansi"]
 specta = ["dep:specta"]
-timing = ["dep:compact_str", "dep:ahash"]
+flamegraph = ["dep:tracing-flame", "dep:inferno"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }

@@ -20,11 +20,7 @@ tauri-build = { version = "2.5.3", default-features = false, features = [
 tauri.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-tauri-plugin-tracing = { path = "../../../", features = [
-  "colored",
-  "specta",
-  "timing",
-] }
+tauri-plugin-tracing = { path = "../../../", features = ["colored", "specta"] }
 
 [dev-dependencies]
 serde_json = "1"

@@ -756,3 +756,35 @@ fn builder_with_layer_full_config() {
         .with_default_subscriber()
         .build::<tauri::Wry>();
 }
+
+// ============================================================================
+// Flamegraph feature tests
+// ============================================================================
+
+#[test]
+fn builder_with_flamegraph() {
+    let _plugin = Builder::new().with_flamegraph().build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_flamegraph_and_default_subscriber() {
+    let _plugin = Builder::new()
+        .with_flamegraph()
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}
+
+#[test]
+fn builder_with_flamegraph_and_layer() {
+    use tracing_subscriber::Layer;
+
+    let noop_layer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::sink)
+        .boxed();
+
+    let _plugin = Builder::new()
+        .with_layer(noop_layer)
+        .with_flamegraph()
+        .with_default_subscriber()
+        .build::<tauri::Wry>();
+}

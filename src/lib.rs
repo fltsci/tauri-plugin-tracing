@@ -2,14 +2,13 @@
 //!
 //! A Tauri plugin that integrates the [`tracing`] crate for structured logging
 //! in Tauri applications. This plugin bridges logging between the Rust backend
-//! and JavaScript frontend, providing call stack information and optional
-//! performance timing.
+//! and JavaScript frontend, providing call stack information.
 //!
 //! ## Features
 //!
 //! - **`colored`**: Enables colored terminal output using ANSI escape codes
 //! - **`specta`**: Enables TypeScript type generation via the `specta` crate
-//! - **`timing`**: Enables performance timing with `time()` and `timeEnd()` APIs
+//! - **`flamegraph`**: Enables flamegraph/flamechart profiling support
 //!
 //! ## Usage
 //!
@@ -162,10 +161,10 @@
 mod callstack;
 mod commands;
 mod error;
+#[cfg(feature = "flamegraph")]
+mod flamegraph;
 mod layer;
 mod strip_ansi;
-#[cfg(feature = "timing")]
-mod timing;
 mod types;
 
 use std::path::PathBuf;
@@ -182,13 +181,9 @@ use tracing_subscriber::{
 // Re-export public types from modules
 pub use callstack::{CallStack, CallStackLine};
 pub use commands::log;
-#[cfg(feature = "timing")]
-pub use commands::{time, time_end};
 pub use error::{Error, Result};
 pub use layer::{LogLevel, LogMessage, RecordPayload, WebviewLayer};
 pub use strip_ansi::{StripAnsiWriter, StripAnsiWriterGuard};
-#[cfg(feature = "timing")]
-pub use timing::{TimingMap, Timings};
 pub use types::{
     FormatOptions, LogFormat, MaxFileSize, Rotation, RotationStrategy, Target, TimezoneStrategy,
 };
@@ -222,39 +217,8 @@ pub type FilterFn = Box<dyn Fn(&tracing::Metadata<'_>) -> bool + Send + Sync>;
 /// ```
 pub type BoxedLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>;
 
-/// Extension trait for Tauri managers that provides timing functionality.
-///
-/// This trait is automatically implemented for all types that implement
-/// [`tauri::Manager`] when the `timing` feature is enabled.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// # #[cfg(feature = "timing")]
-/// # async fn example(app: tauri::AppHandle) {
-/// use tauri_plugin_tracing::LoggerExt;
-///
-/// // In a Tauri command:
-/// app.time("my_operation".into()).await;
-/// // ... perform operation ...
-/// app.time_end("my_operation".into(), None).await;
-/// # }
-/// ```
-#[async_trait::async_trait]
-pub trait LoggerExt<R: Runtime> {
-    /// Starts a timer with the given label.
-    ///
-    /// The timer can be stopped later with [`time_end`](Self::time_end) using the same label.
-    #[cfg(feature = "timing")]
-    async fn time(&self, label: compact_str::CompactString);
-
-    /// Stops a timer and logs the elapsed time.
-    ///
-    /// If a timer with the given label exists, logs the elapsed time in milliseconds.
-    /// If no timer with that label exists, logs a warning.
-    #[cfg(feature = "timing")]
-    async fn time_end(&self, label: compact_str::CompactString, call_stack: Option<String>);
-}
+#[cfg(feature = "flamegraph")]
+pub use flamegraph::*;
 
 /// Re-export of the [`tracing`] crate for convenience.
 pub use tracing;
@@ -314,6 +278,8 @@ pub struct Builder {
     set_default_subscriber: bool,
     #[cfg(feature = "colored")]
     use_colors: bool,
+    #[cfg(feature = "flamegraph")]
+    enable_flamegraph: bool,
 }
 
 impl Default for Builder {
@@ -339,6 +305,8 @@ impl Default for Builder {
             set_default_subscriber: false,
             #[cfg(feature = "colored")]
             use_colors: false,
+            #[cfg(feature = "flamegraph")]
+            enable_flamegraph: false,
         }
     }
 }
@@ -450,6 +418,33 @@ impl Builder {
     /// ```
     pub fn with_layer(mut self, layer: BoxedLayer) -> Self {
         self.custom_layer = Some(layer);
+        self
+    }
+
+    /// Enables flamegraph profiling.
+    ///
+    /// When enabled, tracing spans are recorded to a folded stack format file
+    /// that can be converted to a flamegraph or flamechart visualization.
+    ///
+    /// The folded stack data is written to `{app_log_dir}/profile.folded`.
+    /// Use the `generate_flamegraph` or `generate_flamechart` commands to
+    /// convert this data to an SVG visualization.
+    ///
+    /// Only applies when using [`with_default_subscriber()`](Self::with_default_subscriber).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use tauri_plugin_tracing::Builder;
+    ///
+    /// Builder::new()
+    ///     .with_flamegraph()
+    ///     .with_default_subscriber()
+    ///     .build()
+    /// ```
+    #[cfg(feature = "flamegraph")]
+    pub fn with_flamegraph(mut self) -> Self {
+        self.enable_flamegraph = true;
         self
     }
 
@@ -920,16 +915,16 @@ impl Builder {
         self.filter.clone().with_default(self.log_level)
     }
 
-    #[cfg(feature = "timing")]
+    #[cfg(feature = "flamegraph")]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![
             commands::log,
-            commands::time,
-            commands::time_end
+            commands::generate_flamegraph,
+            commands::generate_flamechart
         ])
     }
 
-    #[cfg(not(feature = "timing"))]
+    #[cfg(not(feature = "flamegraph"))]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![commands::log,])
     }
@@ -971,10 +966,13 @@ impl Builder {
         #[cfg(feature = "colored")]
         let use_colors = self.use_colors;
 
+        #[cfg(feature = "flamegraph")]
+        let enable_flamegraph = self.enable_flamegraph;
+
         Self::plugin_builder()
             .setup(move |app, _api| {
-                #[cfg(feature = "timing")]
-                setup_timings(app);
+                #[cfg(feature = "flamegraph")]
+                setup_flamegraph(app);
 
                 #[cfg(desktop)]
                 if set_default_subscriber {
@@ -992,6 +990,8 @@ impl Builder {
                         format_options,
                         #[cfg(feature = "colored")]
                         use_colors,
+                        #[cfg(feature = "flamegraph")]
+                        enable_flamegraph,
                     )?;
 
                     // Store the guard in Tauri's state management to ensure logs flush on shutdown
@@ -1004,13 +1004,6 @@ impl Builder {
             })
             .build()
     }
-}
-
-/// Initializes the timing state for the application.
-#[cfg(feature = "timing")]
-fn setup_timings<R: Runtime>(app: &AppHandle<R>) {
-    let timings = timing::Timings::default();
-    app.manage(timings);
 }
 
 /// Configuration for a file logging target.
@@ -1099,6 +1092,7 @@ fn acquire_logger<R: Runtime>(
     timezone_strategy: TimezoneStrategy,
     format_options: FormatOptions,
     #[cfg(feature = "colored")] use_colors: bool,
+    #[cfg(feature = "flamegraph")] enable_flamegraph: bool,
 ) -> Result<Option<WorkerGuard>> {
     use std::io;
     use tracing_subscriber::fmt::time::OffsetTime;
@@ -1278,13 +1272,36 @@ fn acquire_logger<R: Runtime>(
         (None, None)
     };
 
+    // Create flame layer if flamegraph feature is enabled
+    #[cfg(feature = "flamegraph")]
+    let flame_layer = if enable_flamegraph {
+        Some(create_flame_layer(app_handle)?)
+    } else {
+        None
+    };
+
     // Create custom filter layer if configured
     let custom_filter_layer = custom_filter.map(|f| filter_fn(move |metadata| f(metadata)));
 
     // Compose the subscriber with all optional layers
-    // Note: custom_layer must be added first because it's typed as Layer<Registry>
+    // Note: Boxed layers (custom_layer, flame_layer) must be combined and added first
+    // because they're typed as Layer<Registry> and the subscriber type changes after each .with()
+    #[cfg(feature = "flamegraph")]
+    let combined_boxed_layer: Option<BoxedLayer> = match (custom_layer, flame_layer) {
+        (Some(c), Some(f)) => {
+            use tracing_subscriber::Layer;
+            Some(c.and_then(f).boxed())
+        }
+        (Some(c), None) => Some(c),
+        (None, Some(f)) => Some(f),
+        (None, None) => None,
+    };
+
+    #[cfg(not(feature = "flamegraph"))]
+    let combined_boxed_layer = custom_layer;
+
     let subscriber = Registry::default()
-        .with(custom_layer)
+        .with(combined_boxed_layer)
         .with(stdout_layer)
         .with(stderr_layer)
         .with(file_layer)
