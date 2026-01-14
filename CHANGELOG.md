@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.2.0-canary.18]
+
+- [`680f9c9`](https://github.com/fltsci/tauri-plugin-tracing/commit/680f9c9b39207db5964f297a792402a45044f637) ([#78](https://github.com/fltsci/tauri-plugin-tracing/pull/78) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add clippy lints to deny `unwrap()` and `expect()` in production code, preventing accidental panics.
+
 ## \[0.2.0-canary.17]
 
 - [`60897d0`](https://github.com/fltsci/tauri-plugin-tracing/commit/60897d067e62e23677aecdc565090b6681dba9f4) ([#76](https://github.com/fltsci/tauri-plugin-tracing/pull/76) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add flamegraph support for custom subscribers and early initialization:
