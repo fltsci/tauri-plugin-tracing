@@ -62,6 +62,7 @@ serde.workspace = true
 serde_repr.workspace = true
 specta = { optional = true, workspace = true }
 tauri.workspace = true
+tauri-plugin-profiling = { optional = true, version = "0.1" }
 thiserror.workspace = true
 time.workspace = true
 tokio.workspace = true
@@ -84,6 +85,7 @@ panic = "abort"
 colored = ["dep:colored", "tracing-subscriber/ansi"]
 default = []
 flamegraph = ["dep:inferno", "dep:tracing-flame"]
+profiling = ["dep:tauri-plugin-profiling"]
 specta = ["dep:specta"]
 
 [dev-dependencies]
