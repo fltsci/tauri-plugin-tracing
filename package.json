@@ -1,6 +1,6 @@
 {
   "name": "@fltsci/tauri-plugin-tracing",
-  "version": "0.2.0-canary.19",
+  "version": "0.2.0-canary.20",
   "author": "Flight Science",
   "description": "",
   "type": "module",
