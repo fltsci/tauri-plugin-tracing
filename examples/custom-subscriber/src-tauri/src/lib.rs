@@ -1,3 +1,4 @@
+#![allow(clippy::expect_used)] // Standard Tauri app entry point pattern
 use tauri::Manager;
 use tauri_plugin_tracing::{LevelFilter, WebviewLayer, tracing_appender};
 use tracing_appender::non_blocking::WorkerGuard;
@@ -42,7 +43,9 @@ pub fn run() {
                 .init();
 
             #[cfg(debug_assertions)]
-            app.get_webview_window("main").unwrap().open_devtools();
+            if let Some(window) = app.get_webview_window("main") {
+                window.open_devtools();
+            }
 
             tracing::info!(log_dir = %log_dir.display(), "App initialized with custom subscriber and file logging");
             Ok(())

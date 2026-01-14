@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! Integration tests for tauri-plugin-tracing.
 //!
 //! These tests exercise functionality that requires a Tauri context,

@@ -1,3 +1,4 @@
+#![allow(clippy::expect_used)] // Standard Tauri app entry point pattern
 use tauri_plugin_tracing::{LevelFilter, Rotation, RotationStrategy};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -25,7 +26,9 @@ pub fn run() {
             #[cfg(debug_assertions)]
             {
                 use tauri::Manager;
-                app.get_webview_window("main").unwrap().open_devtools();
+                if let Some(window) = app.get_webview_window("main") {
+                    window.open_devtools();
+                }
             }
 
             tracing::info!("App initialized with file logging and rotation");

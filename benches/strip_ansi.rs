@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used)]
 use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use std::io::Write;
 use tauri_plugin_tracing::StripAnsiWriter;

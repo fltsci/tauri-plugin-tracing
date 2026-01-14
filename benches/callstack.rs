@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used)]
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tauri_plugin_tracing::CallStack;
 
