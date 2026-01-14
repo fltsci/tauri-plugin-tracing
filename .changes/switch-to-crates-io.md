@@ -3,4 +3,4 @@
 "tracing-js": patch
 ---
 
-Switch Rust package publishing from private Kellnr registry to crates.io.
+Switch to public package publishing: Rust on crates.io, npm with public access.
