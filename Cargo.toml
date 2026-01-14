@@ -1,98 +1,98 @@
 [workspace]
 members = [
-  "examples/default-subscriber/src-tauri",
   "examples/custom-subscriber/src-tauri",
+  "examples/default-subscriber/src-tauri",
 ]
 resolver = "2"
 
 [package]
 authors = ["Flight Science"]
-name = "tauri-plugin-tracing"
-license = "MIT"
-edition = "2024"
-version = "0.3.0"
-repository = "https://github.com/fltsci/tauri-plugin-tracing"
 description = "Use the tracing crate in your Tauri app"
+edition = "2024"
+exclude = ["/dist-js", "/examples", "/guest-js", "/node_modules"]
+license = "MIT"
 links = "tauri-plugin-tracing"
-exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
+name = "tauri-plugin-tracing"
+repository = "https://github.com/fltsci/tauri-plugin-tracing"
+version = "0.3.0"
 
 [workspace.metadata.platforms.support]
-windows = { level = "unknown", notes = "" }
-linux = { level = "unknown", notes = "" }
-macos = { level = "full", notes = "" }
 android = { level = "unknown", notes = "" }
 ios = { level = "unknown", notes = "" }
+linux = { level = "unknown", notes = "" }
+macos = { level = "full", notes = "" }
+windows = { level = "unknown", notes = "" }
 
 [workspace.lints.clippy]
-unwrap_used = "deny"
 expect_used = "deny"
+unwrap_used = "deny"
 
 [lints]
 workspace = true
 
 [build-dependencies]
-tauri-plugin = { version = "2.5.2", features = ["build"] }
+tauri-plugin = { features = ["build"], version = "2.5.2" }
 
 [workspace.dependencies]
-serde = { version = "1.0.228", default-features = false }
-tauri = { version = "2.9.5" }
-thiserror = { version = "2.0.17", default-features = false }
+ahash = { features = ["serde"], version = "0.8.12" }
+colored = { version = "3.0.0" }
+memchr = "2.7.4"
+rolling-file = "0.2.0"
+serde = { default-features = false, version = "1.0.228" }
 serde_repr = "0.1.20"
-tokio = { version = "1.48.0", features = ["full"] }
-tracing = { version = "0.1.43" }
-time = { version = "0.3.44", default-features = false, features = [
+specta = { features = ["derive"], version = "=2.0.0-rc.22" }
+tauri = { version = "2.9.5" }
+thiserror = { default-features = false, version = "2.0.17" }
+time = { default-features = false, features = [
   "formatting",
   "local-offset",
-] }
+], version = "0.3.44" }
+tokio = { features = ["full"], version = "1.48.0" }
+tracing = { version = "0.1.43" }
 tracing-appender = "0.2.4"
-rolling-file = "0.2.0"
 tracing-core = "0.1.35"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter", "time"] }
-memchr = "2.7.4"
-colored = { version = "3.0.0" }
-specta = { version = "=2.0.0-rc.22", features = ["derive"] }
-ahash = { version = "0.8.12", features = ["serde"] }
+tracing-subscriber = { features = ["env-filter", "time"], version = "0.3.22" }
 
 [dependencies]
+colored = { optional = true, workspace = true }
+inferno = { default-features = false, optional = true, version = "0.12" }
+memchr.workspace = true
+rolling-file.workspace = true
 serde.workspace = true
+serde_repr.workspace = true
+specta = { optional = true, workspace = true }
 tauri.workspace = true
 thiserror.workspace = true
-serde_repr.workspace = true
-tracing.workspace = true
-tokio.workspace = true
 time.workspace = true
+tokio.workspace = true
+tracing.workspace = true
 tracing-appender.workspace = true
-rolling-file.workspace = true
 tracing-core.workspace = true
+tracing-flame = { optional = true, version = "0.2" }
 tracing-subscriber.workspace = true
-memchr.workspace = true
-colored = { workspace = true, optional = true }
-specta = { workspace = true, optional = true }
-tracing-flame = { version = "0.2", optional = true }
-inferno = { version = "0.12", default-features = false, optional = true }
 
 
 # default to small, optimized release binaries
 [profile.release]
-panic = "abort"
 codegen-units = 1
-lto = true
 incremental = false
+lto = true
 opt-level = "s"
+panic = "abort"
 
 [features]
-default = []
 colored = ["dep:colored", "tracing-subscriber/ansi"]
+default = []
+flamegraph = ["dep:inferno", "dep:tracing-flame"]
 specta = ["dep:specta"]
-flamegraph = ["dep:tracing-flame", "dep:inferno"]
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { features = ["html_reports"], version = "0.5" }
 
 [[bench]]
+harness = false
 name = "strip_ansi"
-harness = false
 
 [[bench]]
-name = "callstack"
 harness = false
+name = "callstack"
