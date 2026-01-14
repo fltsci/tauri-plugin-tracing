@@ -22,9 +22,8 @@
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager, Runtime};
-use tokio::sync::Mutex;
 use tracing_flame::FlushGuard;
 
 use crate::Result;
@@ -72,14 +71,14 @@ pub fn create_flame_layer<R: Runtime>(app_handle: &AppHandle<R>) -> Result<Boxed
 
     // Store the guard and path in the app state
     let state = app_handle.state::<FlameState>();
-    let guard_lock = state.guard.clone();
-    let path_lock = state.folded_path.clone();
-
-    // Use blocking task to store since we're in sync context
-    tauri::async_runtime::block_on(async {
-        *guard_lock.lock().await = Some(guard);
-        *path_lock.lock().await = Some(folded_path);
-    });
+    *state
+        .guard
+        .lock()
+        .map_err(|e| crate::Error::LockPoisoned(e.to_string()))? = Some(guard);
+    *state
+        .folded_path
+        .lock()
+        .map_err(|e| crate::Error::LockPoisoned(e.to_string()))? = Some(folded_path);
 
     Ok(layer.boxed())
 }

@@ -1,3 +1,7 @@
 [default]
-description = "Allows the log command"
-permissions = ["allow-log"]
+description = "Allows the log and flamegraph commands"
+permissions = [
+  "allow-log",
+  "allow-generate-flamegraph",
+  "allow-generate-flamechart",
+]

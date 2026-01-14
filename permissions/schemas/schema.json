@@ -307,10 +307,34 @@
           "markdownDescription": "Denies the log command without any pre-configured scope."
         },
         {
-          "description": "Allows the log command\n#### This default permission set includes:\n\n- `allow-log`",
+          "description": "Allows the log and flamegraph commands\n#### This default permission set includes:\n\n- `allow-log`\n- `allow-generate-flamegraph`\n- `allow-generate-flamechart`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Allows the log command\n#### This default permission set includes:\n\n- `allow-log`"
+          "markdownDescription": "Allows the log and flamegraph commands\n#### This default permission set includes:\n\n- `allow-log`\n- `allow-generate-flamegraph`\n- `allow-generate-flamechart`"
+        },
+        {
+          "description": "Enables the generate_flamechart command.",
+          "type": "string",
+          "const": "allow-generate-flamechart",
+          "markdownDescription": "Enables the generate_flamechart command."
+        },
+        {
+          "description": "Denies the generate_flamechart command.",
+          "type": "string",
+          "const": "deny-generate-flamechart",
+          "markdownDescription": "Denies the generate_flamechart command."
+        },
+        {
+          "description": "Enables the generate_flamegraph command.",
+          "type": "string",
+          "const": "allow-generate-flamegraph",
+          "markdownDescription": "Enables the generate_flamegraph command."
+        },
+        {
+          "description": "Denies the generate_flamegraph command.",
+          "type": "string",
+          "const": "deny-generate-flamegraph",
+          "markdownDescription": "Denies the generate_flamegraph command."
         },
         {
           "description": "Enables the log command.",

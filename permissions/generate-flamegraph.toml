@@ -1,0 +1,11 @@
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-generate-flamegraph"
+description = "Enables the generate_flamegraph command."
+commands.allow = ["generate_flamegraph"]
+
+[[permission]]
+identifier = "deny-generate-flamegraph"
+description = "Denies the generate_flamegraph command."
+commands.deny = ["generate_flamegraph"]

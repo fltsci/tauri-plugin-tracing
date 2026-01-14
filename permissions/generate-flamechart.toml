@@ -1,0 +1,11 @@
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-generate-flamechart"
+description = "Enables the generate_flamechart command."
+commands.allow = ["generate_flamechart"]
+
+[[permission]]
+identifier = "deny-generate-flamechart"
+description = "Denies the generate_flamechart command."
+commands.deny = ["generate_flamechart"]
