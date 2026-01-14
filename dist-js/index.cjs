@@ -385,33 +385,19 @@ async function attachConsole() {
 
 /**
  * Console interception to route browser console calls to Rust tracing.
+ *
+ * See the main module documentation for a guide on choosing between
+ * `attachConsole()`, `interceptConsole()`, and `takeoverConsole()`.
+ *
  * @module
  */
 let originalConsole = null;
+let fullOriginalConsole = null;
 /**
- * Intercepts browser console calls and routes them to the Rust tracing system.
+ * Intercepts console calls and routes them to Rust tracing.
  *
- * After calling this function, all console.log, console.debug, console.info,
- * console.warn, and console.error calls will be forwarded to the Rust backend
- * via the tracing plugin.
- *
- * @param options - Configuration options
  * @param options.preserveOriginal - If true, also calls the original console method (default: false)
  * @returns A function to restore the original console
- *
- * @example
- * ```ts
- * import { interceptConsole } from '@fltsci/tauri-plugin-tracing';
- *
- * // All console calls now go to Rust tracing
- * const restore = interceptConsole();
- *
- * console.log('This goes to Rust');
- * console.error('Errors too');
- *
- * // Restore original console
- * restore();
- * ```
  */
 function interceptConsole(options = {}) {
     const { preserveOriginal = false } = options;
@@ -459,71 +445,130 @@ function restoreConsole() {
     }
 }
 /**
- * Completely takes over the webview console, routing all logs through Rust tracing.
+ * Restores all console methods after full takeover.
+ */
+function restoreFullConsole() {
+    if (fullOriginalConsole) {
+        console.log = fullOriginalConsole.log;
+        console.debug = fullOriginalConsole.debug;
+        console.info = fullOriginalConsole.info;
+        console.warn = fullOriginalConsole.warn;
+        console.error = fullOriginalConsole.error;
+        console.trace = fullOriginalConsole.trace;
+        console.assert = fullOriginalConsole.assert;
+        console.dir = fullOriginalConsole.dir;
+        console.dirxml = fullOriginalConsole.dirxml;
+        console.table = fullOriginalConsole.table;
+        console.clear = fullOriginalConsole.clear;
+        console.count = fullOriginalConsole.count;
+        console.countReset = fullOriginalConsole.countReset;
+        console.group = fullOriginalConsole.group;
+        console.groupCollapsed = fullOriginalConsole.groupCollapsed;
+        console.groupEnd = fullOriginalConsole.groupEnd;
+        console.time = fullOriginalConsole.time;
+        console.timeEnd = fullOriginalConsole.timeEnd;
+        console.timeLog = fullOriginalConsole.timeLog;
+        fullOriginalConsole = null;
+    }
+}
+/**
+ * Full console takeover: JS console → Rust tracing → browser console.
  *
- * This function:
- * 1. Intercepts all console calls (log, debug, info, warn, error, trace) and
- *    sends them to the Rust tracing backend
- * 2. Listens for Rust tracing events and outputs them to the original console
+ * **Routed through Rust:** `log`, `debug`, `info`, `warn`, `error`, `trace`,
+ * `assert`, `dir`, `dirxml`, `table`
  *
- * This creates a unified logging pipeline where all logs (both JS and Rust)
- * flow through Rust's tracing infrastructure, then appear in the browser console.
+ * **Native (zero IPC overhead):** `clear`, `count`, `countReset`, `group`,
+ * `groupCollapsed`, `groupEnd`, `time`, `timeEnd`, `timeLog`
  *
- * @returns A promise that resolves to a cleanup function to restore normal console behavior
- *
- * @example
- * ```ts
- * import { takeoverConsole } from '@fltsci/tauri-plugin-tracing';
- *
- * // Take over console - all logs now flow through Rust tracing
- * const restore = await takeoverConsole();
- *
- * console.log('This goes to Rust, then back to console');
- * console.error('Errors too');
- *
- * // Restore original console behavior
- * restore();
- * ```
+ * @returns A cleanup function to restore normal console behavior
  */
 async function takeoverConsole() {
-    // Store original console methods before interception
-    const savedConsole = {
+    // Store ALL original console methods before interception
+    fullOriginalConsole = {
+        // Logging methods
         log: console.log.bind(console),
         debug: console.debug.bind(console),
         info: console.info.bind(console),
         warn: console.warn.bind(console),
         error: console.error.bind(console),
-        trace: console.trace.bind(console)
+        trace: console.trace.bind(console),
+        assert: console.assert.bind(console),
+        dir: console.dir.bind(console),
+        dirxml: console.dirxml.bind(console),
+        table: console.table.bind(console),
+        // UI/utility methods
+        clear: console.clear.bind(console),
+        count: console.count.bind(console),
+        countReset: console.countReset.bind(console),
+        group: console.group.bind(console),
+        groupCollapsed: console.groupCollapsed.bind(console),
+        groupEnd: console.groupEnd.bind(console),
+        time: console.time.bind(console),
+        timeEnd: console.timeEnd.bind(console),
+        timeLog: console.timeLog.bind(console)
     };
-    // Intercept console calls and route to Rust (don't preserve original - we'll handle output ourselves)
-    interceptConsole({ preserveOriginal: false });
+    const saved = fullOriginalConsole;
+    // Helper to wrap logging methods
+    const wrapLog = (level) => {
+        const logFn = { trace, debug, info, warn, error }[level];
+        return (...args) => logFn(...args);
+    };
+    // Replace logging methods - route to tracing
+    console.log = wrapLog('debug');
+    console.debug = wrapLog('debug');
+    console.info = wrapLog('info');
+    console.warn = wrapLog('warn');
+    console.error = wrapLog('error');
+    console.trace = wrapLog('trace');
+    // assert: log error only if condition is falsy
+    console.assert = (condition, ...data) => {
+        if (!condition) {
+            error('Assertion failed:', ...data);
+        }
+    };
+    // Object inspection methods - map to debug level
+    console.dir = (...args) => debug(...args);
+    console.dirxml = (...args) => debug(...args);
+    console.table = (...args) => {
+        // Try to format table data nicely
+        const [data, columns] = args;
+        if (columns) {
+            debug('table:', data, 'columns:', columns);
+        }
+        else {
+            debug('table:', data);
+        }
+    };
+    // UI/utility methods (clear, count, countReset, group, groupCollapsed, groupEnd,
+    // time, timeEnd, timeLog) are intentionally NOT replaced. They continue to call
+    // the native console methods directly with zero IPC overhead. Only logging methods
+    // that produce actual log output are routed through Rust tracing.
     // Listen for Rust tracing events and output using the ORIGINAL console methods
-    // This avoids infinite loops since we use savedConsole, not the intercepted console
     const unlisten = await event.listen('tracing://log', (event) => {
         const { level } = event.payload;
         const message = cleanMessage(event.payload.message);
         switch (level) {
             case exports.LogLevel.Trace:
-                savedConsole.log(message);
+                saved.log(message);
                 break;
             case exports.LogLevel.Debug:
-                savedConsole.debug(message);
+                saved.debug(message);
                 break;
             case exports.LogLevel.Info:
-                savedConsole.info(message);
+                saved.info(message);
                 break;
             case exports.LogLevel.Warn:
-                savedConsole.warn(message);
+                saved.warn(message);
                 break;
             case exports.LogLevel.Error:
-                savedConsole.error(message);
+                saved.error(message);
                 break;
         }
     });
     // Return cleanup function
     return () => {
         unlisten();
-        restoreConsole();
+        restoreFullConsole();
     };
 }
 
