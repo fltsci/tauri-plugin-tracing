@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.2.0-canary.21]
+
+- [`829732c`](https://github.com/fltsci/tauri-plugin-tracing/commit/829732caf2938fe3b1436f938821e8ab9d6d29c6) ([#87](https://github.com/fltsci/tauri-plugin-tracing/pull/87) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Remove private registry configuration.
+- [`437dab0`](https://github.com/fltsci/tauri-plugin-tracing/commit/437dab0250ee0f5a8c3c69330c5c7a2df58e50ad) ([#85](https://github.com/fltsci/tauri-plugin-tracing/pull/85) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Shorten README, link to docs.rs for details.
+
 ## \[0.2.0-canary.20]
 
 - [`061b015`](https://github.com/fltsci/tauri-plugin-tracing/commit/061b0159e4b69055d6adfa98a3c40712640fc58b) ([#84](https://github.com/fltsci/tauri-plugin-tracing/pull/84) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Clarify that the flamegraph feature measures span timing (wall-clock time), not CPU time. Updated documentation with appropriate use cases and limitations.
