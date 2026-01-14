@@ -2,14 +2,13 @@
 //!
 //! A Tauri plugin that integrates the [`tracing`] crate for structured logging
 //! in Tauri applications. This plugin bridges logging between the Rust backend
-//! and JavaScript frontend, providing call stack information and optional
-//! performance timing.
+//! and JavaScript frontend, providing call stack information.
 //!
 //! ## Features
 //!
 //! - **`colored`**: Enables colored terminal output using ANSI escape codes
 //! - **`specta`**: Enables TypeScript type generation via the `specta` crate
-//! - **`timing`**: Enables performance timing with `time()` and `timeEnd()` APIs
+//! - **`flamegraph`**: Enables flamegraph/flamechart profiling support
 //!
 //! ## Usage
 //!
@@ -166,8 +165,6 @@ mod error;
 mod flamegraph;
 mod layer;
 mod strip_ansi;
-#[cfg(feature = "timing")]
-mod timing;
 mod types;
 
 use std::path::PathBuf;
@@ -184,13 +181,9 @@ use tracing_subscriber::{
 // Re-export public types from modules
 pub use callstack::{CallStack, CallStackLine};
 pub use commands::log;
-#[cfg(feature = "timing")]
-pub use commands::{time, time_end};
 pub use error::{Error, Result};
 pub use layer::{LogLevel, LogMessage, RecordPayload, WebviewLayer};
 pub use strip_ansi::{StripAnsiWriter, StripAnsiWriterGuard};
-#[cfg(feature = "timing")]
-pub use timing::{TimingMap, Timings};
 pub use types::{
     FormatOptions, LogFormat, MaxFileSize, Rotation, RotationStrategy, Target, TimezoneStrategy,
 };
@@ -226,40 +219,6 @@ pub type BoxedLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync 
 
 #[cfg(feature = "flamegraph")]
 pub use flamegraph::*;
-
-/// Extension trait for Tauri managers that provides timing functionality.
-///
-/// This trait is automatically implemented for all types that implement
-/// [`tauri::Manager`] when the `timing` feature is enabled.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// # #[cfg(feature = "timing")]
-/// # async fn example(app: tauri::AppHandle) {
-/// use tauri_plugin_tracing::LoggerExt;
-///
-/// // In a Tauri command:
-/// app.time("my_operation".into()).await;
-/// // ... perform operation ...
-/// app.time_end("my_operation".into(), None).await;
-/// # }
-/// ```
-#[async_trait::async_trait]
-pub trait LoggerExt<R: Runtime> {
-    /// Starts a timer with the given label.
-    ///
-    /// The timer can be stopped later with [`time_end`](Self::time_end) using the same label.
-    #[cfg(feature = "timing")]
-    async fn time(&self, label: compact_str::CompactString);
-
-    /// Stops a timer and logs the elapsed time.
-    ///
-    /// If a timer with the given label exists, logs the elapsed time in milliseconds.
-    /// If no timer with that label exists, logs a warning.
-    #[cfg(feature = "timing")]
-    async fn time_end(&self, label: compact_str::CompactString, call_stack: Option<String>);
-}
 
 /// Re-export of the [`tracing`] crate for convenience.
 pub use tracing;
@@ -956,27 +915,7 @@ impl Builder {
         self.filter.clone().with_default(self.log_level)
     }
 
-    #[cfg(all(feature = "timing", feature = "flamegraph"))]
-    fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
-        plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![
-            commands::log,
-            commands::time,
-            commands::time_end,
-            commands::generate_flamegraph,
-            commands::generate_flamechart
-        ])
-    }
-
-    #[cfg(all(feature = "timing", not(feature = "flamegraph")))]
-    fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
-        plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![
-            commands::log,
-            commands::time,
-            commands::time_end
-        ])
-    }
-
-    #[cfg(all(not(feature = "timing"), feature = "flamegraph"))]
+    #[cfg(feature = "flamegraph")]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![
             commands::log,
@@ -985,7 +924,7 @@ impl Builder {
         ])
     }
 
-    #[cfg(all(not(feature = "timing"), not(feature = "flamegraph")))]
+    #[cfg(not(feature = "flamegraph"))]
     fn plugin_builder<R: Runtime>() -> plugin::Builder<R> {
         plugin::Builder::new("tracing").invoke_handler(tauri::generate_handler![commands::log,])
     }
@@ -1032,9 +971,6 @@ impl Builder {
 
         Self::plugin_builder()
             .setup(move |app, _api| {
-                #[cfg(feature = "timing")]
-                setup_timings(app);
-
                 #[cfg(feature = "flamegraph")]
                 setup_flamegraph(app);
 
@@ -1068,13 +1004,6 @@ impl Builder {
             })
             .build()
     }
-}
-
-/// Initializes the timing state for the application.
-#[cfg(feature = "timing")]
-fn setup_timings<R: Runtime>(app: &AppHandle<R>) {
-    let timings = timing::Timings::default();
-    app.manage(timings);
 }
 
 /// Configuration for a file logging target.

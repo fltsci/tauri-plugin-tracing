@@ -5,9 +5,7 @@ use crate::layer::{LogLevel, LogMessage};
 use tauri::Runtime;
 use tracing::Level;
 
-#[cfg(feature = "timing")]
-use crate::LoggerExt;
-#[cfg(any(feature = "timing", feature = "flamegraph"))]
+#[cfg(feature = "flamegraph")]
 use tauri::AppHandle;
 
 #[tauri::command]
@@ -43,29 +41,6 @@ pub fn log<R: Runtime>(
         LogLevel::Warn => emit_event!(Level::WARN),
         LogLevel::Error => emit_event!(Level::ERROR),
     }
-}
-
-#[cfg(feature = "timing")]
-#[tauri::command]
-pub async fn time<R: Runtime>(app: AppHandle<R>, window: tauri::Window<R>, label: String) {
-    use compact_str::ToCompactString;
-    // Namespace timer by window label to prevent cross-window interference
-    let key = format!("{}:{}", window.label(), label);
-    app.time(key.to_compact_string()).await;
-}
-
-#[cfg(feature = "timing")]
-#[tauri::command]
-pub async fn time_end<R: Runtime>(
-    app: AppHandle<R>,
-    window: tauri::Window<R>,
-    label: String,
-    call_stack: Option<String>,
-) {
-    use compact_str::ToCompactString;
-    // Namespace timer by window label to prevent cross-window interference
-    let key = format!("{}:{}", window.label(), label);
-    app.time_end(key.to_compact_string(), call_stack).await;
 }
 
 /// Generates a flamegraph SVG from the recorded profiling data.
