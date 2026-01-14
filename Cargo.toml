@@ -14,7 +14,7 @@ license = "MIT"
 links = "tauri-plugin-tracing"
 name = "tauri-plugin-tracing"
 repository = "https://github.com/fltsci/tauri-plugin-tracing"
-version = "0.3.1"
+version = "0.3.2"
 
 [workspace.metadata.platforms.support]
 android = { level = "unknown", notes = "" }

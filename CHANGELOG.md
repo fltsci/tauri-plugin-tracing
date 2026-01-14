@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.3.2]
+
+- [`97f668f`](https://github.com/fltsci/tauri-plugin-tracing/commit/97f668f1d021364aeb4c0f8e2a70d7899969d480) ([#95](https://github.com/fltsci/tauri-plugin-tracing/pull/95) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add CPU profiling integration with span correlation via new `profiling` feature. Includes `TracedProfilingExt` for automatic span/logging around profiles, `SpanTimingLayer` for capturing span timing, and `SpanAwareProfilingExt` for correlating CPU samples with active tracing spans.
+
 ## \[0.3.1]
 
 - [`b61f9ab`](https://github.com/fltsci/tauri-plugin-tracing/commit/b61f9abc5426d2d36df39344bbd4bb0ce9912a6e) ([#89](https://github.com/fltsci/tauri-plugin-tracing/pull/89) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add crates.io, docs.rs, npm, license, and CI status badges to README.
