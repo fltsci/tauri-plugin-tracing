@@ -1,5 +1,29 @@
 # Changelog
 
+## \[0.3.0]
+
+- [`061b015`](https://github.com/fltsci/tauri-plugin-tracing/commit/061b0159e4b69055d6adfa98a3c40712640fc58b) ([#84](https://github.com/fltsci/tauri-plugin-tracing/pull/84) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Clarify that the flamegraph feature measures span timing (wall-clock time), not CPU time. Updated documentation with appropriate use cases and limitations.
+- [`b059e9f`](https://github.com/fltsci/tauri-plugin-tracing/commit/b059e9fea7647ca85b5f9d4821a08f0258e4a216) ([#73](https://github.com/fltsci/tauri-plugin-tracing/pull/73) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Release 0.2.0 stable.
+
+  **Highlights:**
+
+  - Add `flamegraph` feature for performance profiling with flamegraph/flamechart generation
+  - Add `WebviewLayer` for custom subscriber setups
+  - Add file logging with rotation (`with_file_logging()`, `with_rotation()`, `with_max_file_size()`)
+  - Add `StripAnsiWriter` for clean file output when using colored terminal output
+  - Add custom filter support (`filter()`) and custom layer support (`with_layer()`)
+  - Add format options (`with_format()`, `with_file()`, `with_line_number()`, etc.)
+  - Add timezone strategy for log timestamps
+  - Add per-target log level filtering (`with_target()`)
+  - Add `takeoverConsole()` for full console integration (JS → Rust → browser)
+  - Add `interceptConsole()` and `attachConsole()` for flexible console routing
+  - Add early initialization support for flamegraph (`create_flame_layer_with_path()`)
+  - Add clippy lints to deny `unwrap()`/`expect()` in production code
+  - Remove `timing` feature (use native `console.time()` or tracing spans instead)
+- [`829732c`](https://github.com/fltsci/tauri-plugin-tracing/commit/829732caf2938fe3b1436f938821e8ab9d6d29c6) ([#87](https://github.com/fltsci/tauri-plugin-tracing/pull/87) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Remove private registry configuration.
+- [`437dab0`](https://github.com/fltsci/tauri-plugin-tracing/commit/437dab0250ee0f5a8c3c69330c5c7a2df58e50ad) ([#85](https://github.com/fltsci/tauri-plugin-tracing/pull/85) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Shorten README, link to docs.rs for details.
+- [`675d209`](https://github.com/fltsci/tauri-plugin-tracing/commit/675d2095ae6edb7d4333cd5225d29c3914d39469) ([#82](https://github.com/fltsci/tauri-plugin-tracing/pull/82) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Switch to public package publishing: Rust on crates.io, npm with public access.
+
 ## \[0.2.0-canary.21]
 
 - [`829732c`](https://github.com/fltsci/tauri-plugin-tracing/commit/829732caf2938fe3b1436f938821e8ab9d6d29c6) ([#87](https://github.com/fltsci/tauri-plugin-tracing/pull/87) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Remove private registry configuration.
