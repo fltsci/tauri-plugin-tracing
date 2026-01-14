@@ -220,7 +220,7 @@ For advanced use cases, compose your own subscriber:
 
 ```rust
 use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 
 let builder = Builder::new()
     .with_max_level(LevelFilter::DEBUG)
@@ -231,11 +231,11 @@ let filter = builder.build_filter();
 tauri::Builder::default()
     .plugin(builder.build())
     .setup(move |app| {
-        let subscriber = Registry::default()
+        Registry::default()
             .with(fmt::layer())
             .with(WebviewLayer::new(app.handle().clone()))
-            .with(filter);
-        tracing::subscriber::set_global_default(subscriber)?;
+            .with(filter)
+            .init();
         Ok(())
     })
     .run(tauri::generate_context!())
@@ -247,8 +247,9 @@ tauri::Builder::default()
 Use `tracing_appender` (re-exported by this crate) for file logging with custom subscribers:
 
 ```rust
+use tauri::Manager;
 use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, tracing_appender};
-use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 
 let builder = Builder::new().with_max_level(LevelFilter::DEBUG);
 let filter = builder.build_filter();
@@ -263,12 +264,12 @@ tauri::Builder::default()
         // Store guard in Tauri state to keep file logging active
         app.manage(guard);
 
-        let subscriber = Registry::default()
+        Registry::default()
             .with(fmt::layer())
             .with(fmt::layer().with_ansi(false).with_writer(non_blocking))
             .with(WebviewLayer::new(app.handle().clone()))
-            .with(filter);
-        tracing::subscriber::set_global_default(subscriber)?;
+            .with(filter)
+            .init();
         Ok(())
     })
     .run(tauri::generate_context!())

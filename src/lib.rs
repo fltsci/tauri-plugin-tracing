@@ -18,7 +18,7 @@
 //!
 //! ```rust,no_run
 //! # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-//! # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+//! # use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 //! let tracing_builder = Builder::new()
 //!     .with_max_level(LevelFilter::DEBUG)
 //!     .with_target("hyper", LevelFilter::WARN);
@@ -27,11 +27,11 @@
 //! tauri::Builder::default()
 //!     .plugin(tracing_builder.build())
 //!     .setup(move |app| {
-//!         let subscriber = Registry::default()
+//!         Registry::default()
 //!             .with(fmt::layer())
 //!             .with(WebviewLayer::new(app.handle().clone()))
-//!             .with(filter);
-//!         tracing::subscriber::set_global_default(subscriber)?;
+//!             .with(filter)
+//!             .init();
 //!         Ok(())
 //!     });
 //!     // .run(tauri::generate_context!())
@@ -72,7 +72,7 @@
 //! ```rust,no_run
 //! # use tauri::Manager;
 //! # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, tracing_appender};
-//! # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+//! # use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 //! let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
 //! let filter = tracing_builder.build_filter();
 //!
@@ -84,12 +84,12 @@
 //!         let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 //!         // Store _guard in Tauri state to keep file logging active
 //!
-//!         let subscriber = Registry::default()
+//!         Registry::default()
 //!             .with(fmt::layer())
 //!             .with(fmt::layer().with_ansi(false).with_writer(non_blocking))
 //!             .with(WebviewLayer::new(app.handle().clone()))
-//!             .with(filter);
-//!         tracing::subscriber::set_global_default(subscriber)?;
+//!             .with(filter)
+//!             .init();
 //!         Ok(())
 //!     });
 //!     // .run(tauri::generate_context!())
@@ -169,7 +169,6 @@
 //! Use [`create_flame_layer()`] to add flamegraph profiling to a custom subscriber:
 //!
 //! ```rust,ignore
-//! use tauri::Manager;
 //! use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, create_flame_layer};
 //! use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 //!
@@ -986,7 +985,7 @@ impl Builder {
     ///
     /// ```rust,no_run
     /// # use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter};
-    /// # use tracing_subscriber::{Registry, layer::SubscriberExt, fmt};
+    /// # use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
     /// let builder = Builder::new()
     ///     .with_max_level(LevelFilter::DEBUG)
     ///     .with_target("hyper", LevelFilter::WARN);
@@ -996,11 +995,11 @@ impl Builder {
     /// tauri::Builder::default()
     ///     .plugin(builder.build())
     ///     .setup(move |app| {
-    ///         let subscriber = Registry::default()
+    ///         Registry::default()
     ///             .with(fmt::layer())
     ///             .with(WebviewLayer::new(app.handle().clone()))
-    ///             .with(filter);
-    ///         tracing::subscriber::set_global_default(subscriber)?;
+    ///             .with(filter)
+    ///             .init();
     ///         Ok(())
     ///     });
     ///     // .run(tauri::generate_context!())
