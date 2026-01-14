@@ -2,14 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import * as tracing from '@fltsci/tauri-plugin-tracing'
+import { takeoverConsole } from '@fltsci/tauri-plugin-tracing'
 
-console.log = tracing.info
-console.debug = tracing.debug
-console.info = tracing.info
-console.warn = tracing.warn
-console.error = tracing.error
-console.trace = tracing.trace
+// Full console takeover: JS console → Rust tracing → browser console
+// All logs flow through Rust's tracing infrastructure (file logging, filtering, etc.)
+takeoverConsole()
 
 createRoot(
   document.getElementById('root') ?? document.createElement('root')
