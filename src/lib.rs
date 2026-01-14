@@ -11,7 +11,8 @@
 //!
 //! - **`colored`**: Enables colored terminal output using ANSI escape codes
 //! - **`specta`**: Enables TypeScript type generation via the `specta` crate
-//! - **`flamegraph`**: Enables flamegraph/flamechart profiling support
+//! - **`flamegraph`**: Enables flamegraph/flamechart profiling support (wall-clock span timing)
+//! - **`profiling`**: Enables CPU profiling via [`tauri-plugin-profiling`](https://crates.io/crates/tauri-plugin-profiling)
 //!
 //! ## Usage
 //!
@@ -246,6 +247,49 @@
 //! const flamechartPath = await generateFlamechart();
 //! ```
 //!
+//! ## CPU Profiling
+//!
+//! The `profiling` feature enables sampling-based CPU profiling via
+//! [`tauri-plugin-profiling`](https://crates.io/crates/tauri-plugin-profiling).
+//! Unlike flamegraph profiling (which measures wall-clock time including I/O waits),
+//! CPU profiling measures actual CPU cycles spent executing code.
+//!
+//! Use [`TracedProfilingExt`] for automatic span creation and logging:
+//!
+//! ```rust,no_run
+//! use tauri::Manager;
+//! use tauri_plugin_tracing::{Builder, LevelFilter, TracedProfilingExt, init_profiling};
+//!
+//! tauri::Builder::default()
+//!     .plugin(Builder::new().with_max_level(LevelFilter::DEBUG).build())
+//!     .plugin(init_profiling())
+//!     .setup(|app| {
+//!         // Start CPU profiling with automatic span + logging
+//!         app.start_cpu_profile_traced()?;
+//!
+//!         // ... do CPU-intensive work ...
+//!
+//!         // Stop - automatically logs results (samples, duration, path)
+//!         let result = app.stop_cpu_profile_traced()?;
+//!         Ok(())
+//!     })
+//!     .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
+//!     .expect("error while running tauri application");
+//! ```
+//!
+//! Or use the base [`ProfilingExt`](ProfilingExtBase) trait directly without tracing integration.
+//!
+//! From JavaScript (import from the profiling package directly):
+//!
+//! ```javascript
+//! import { startCpuProfile, stopCpuProfile } from '@fltsci/tauri-plugin-profiling';
+//!
+//! await startCpuProfile({ frequency: 100 });
+//! // ... do work ...
+//! const result = await stopCpuProfile();
+//! console.log('CPU flamegraph:', result.flamegraphPath);
+//! ```
+//!
 //! ## JavaScript API
 //!
 //! ```javascript
@@ -262,6 +306,8 @@ mod error;
 #[cfg(feature = "flamegraph")]
 mod flamegraph;
 mod layer;
+#[cfg(feature = "profiling")]
+mod profiling;
 mod strip_ansi;
 mod types;
 
@@ -317,6 +363,9 @@ pub type BoxedLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync 
 
 #[cfg(feature = "flamegraph")]
 pub use flamegraph::*;
+
+#[cfg(feature = "profiling")]
+pub use profiling::*;
 
 /// Re-export of the [`tracing`] crate for convenience.
 pub use tracing;
