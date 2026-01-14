@@ -5,7 +5,7 @@ use std::path::PathBuf;
 /// Specifies a log output destination.
 ///
 /// Use these variants to configure where logs should be written. Multiple
-/// targets can be combined using [`Builder::target()`] or [`Builder::targets()`].
+/// targets can be combined using [`Builder::target()`](crate::Builder::target) or [`Builder::targets()`](crate::Builder::targets).
 ///
 /// # Example
 ///

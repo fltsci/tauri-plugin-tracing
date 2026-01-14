@@ -84,7 +84,7 @@ pub(crate) fn strip_ansi_and_write<W: Write>(writer: &mut W, buf: &[u8]) -> std:
     Ok(input_len)
 }
 
-/// A writer handle returned by [`StripAnsiWriter::make_writer`].
+/// A writer handle returned by the [`MakeWriter`](tracing_subscriber::fmt::MakeWriter) implementation.
 ///
 /// This type implements [`std::io::Write`] and strips ANSI codes during writes.
 pub struct StripAnsiWriterGuard<'a, W> {
