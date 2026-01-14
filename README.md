@@ -51,12 +51,14 @@ info('Hello from JS');  // Send JS logs to Rust
 - **Filtering**: per-module log levels
 - **Custom layers**: OpenTelemetry, Sentry, or any tracing-subscriber layer
 - **Span visualization**: flamegraph/flamechart SVG generation (`flamegraph` feature)
+- **CPU profiling**: sampling-based profiling with span correlation (`profiling` feature)
 
 ### Cargo Features
 
 - `colored` - ANSI color output
 - `specta` - TypeScript type generation
 - `flamegraph` - Span timing visualization
+- `profiling` - CPU profiling via [tauri-plugin-profiling](https://crates.io/crates/tauri-plugin-profiling)
 
 ## Console Integration
 

@@ -257,6 +257,7 @@
 //! Use [`TracedProfilingExt`] for automatic span creation and logging:
 //!
 //! ```rust,no_run
+//! use tauri::Manager;
 //! use tauri_plugin_tracing::{Builder, LevelFilter, TracedProfilingExt, init_profiling};
 //!
 //! tauri::Builder::default()
@@ -272,7 +273,7 @@
 //!         let result = app.stop_cpu_profile_traced()?;
 //!         Ok(())
 //!     })
-//!     .run(tauri::generate_context!())
+//!     .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
 //!     .expect("error while running tauri application");
 //! ```
 //!

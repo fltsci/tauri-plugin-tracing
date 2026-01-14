@@ -620,3 +620,143 @@ fn boxed_layer_type_exported() {
 
     let _plugin = Builder::new().with_layer(layer).build::<tauri::Wry>();
 }
+
+// ============================================================================
+// Profiling Feature Tests
+// ============================================================================
+
+#[test]
+fn profiling_types_exported() {
+    // Verify all profiling types are re-exported
+    use tauri_plugin_tracing::{ProfilingConfig, StartOptions, init_profiling};
+
+    // Verify types can be instantiated
+    let _options = StartOptions::default();
+    let _config = ProfilingConfig::default();
+
+    // Verify init_profiling returns a plugin
+    let _plugin = init_profiling::<tauri::Wry>();
+}
+
+#[test]
+fn span_timing_layer_creation() {
+    use tauri_plugin_tracing::SpanTimingLayer;
+
+    // Create a new span timing layer
+    let (layer, capture) = SpanTimingLayer::new();
+
+    // Verify capture starts not capturing
+    assert!(!capture.is_capturing());
+
+    // Drop to avoid unused warning
+    drop(layer);
+}
+
+#[test]
+fn span_timing_capture_start_stop() {
+    use tauri_plugin_tracing::SpanTimingLayer;
+
+    let (_layer, capture) = SpanTimingLayer::new();
+
+    // Start capturing
+    capture.start_capture();
+    assert!(capture.is_capturing());
+
+    // Stop and get events
+    let events = capture.stop_capture();
+    assert!(events.is_empty()); // No spans were created
+
+    // Should not be capturing after stop
+    assert!(!capture.is_capturing());
+}
+
+#[test]
+fn span_timing_records_spans() {
+    use tauri_plugin_tracing::SpanTimingLayer;
+    use tracing_subscriber::{Registry, layer::SubscriberExt};
+
+    let (layer, capture) = SpanTimingLayer::new();
+
+    // Set up subscriber with our layer
+    let subscriber = Registry::default().with(layer);
+
+    tracing::subscriber::with_default(subscriber, || {
+        // Start capturing
+        capture.start_capture();
+
+        // Create some spans
+        let span = tracing::info_span!("test_span");
+        let _guard = span.enter();
+
+        // Stop capturing
+        let events = capture.stop_capture();
+
+        // Should have recorded enter event (and possibly close)
+        assert!(!events.is_empty());
+        assert!(events.iter().any(|e| e.name.contains("test_span")));
+    });
+}
+
+#[test]
+fn span_event_type_variants() {
+    use tauri_plugin_tracing::SpanEventType;
+
+    // Verify all variants exist
+    let _enter = SpanEventType::Enter;
+    let _exit = SpanEventType::Exit;
+    let _close = SpanEventType::Close;
+}
+
+#[test]
+fn span_correlation_report_display() {
+    use tauri_plugin_tracing::{ActiveSpan, ProfileResult, SpanCorrelationReport};
+
+    // Create a mock report
+    let report = SpanCorrelationReport {
+        profile: ProfileResult {
+            sample_count: 100,
+            duration_ms: 1000,
+            flamegraph_path: "/tmp/test.svg".into(),
+        },
+        duration_us: 1_000_000,
+        active_spans: vec![
+            ActiveSpan {
+                name: "test::span1".to_string(),
+                total_time_us: 500_000,
+                enter_count: 1,
+                percentage: 50.0,
+            },
+            ActiveSpan {
+                name: "test::span2".to_string(),
+                total_time_us: 300_000,
+                enter_count: 2,
+                percentage: 30.0,
+            },
+        ],
+        events: vec![],
+    };
+
+    // Verify Display implementation
+    let output = report.to_string();
+    assert!(output.contains("CPU Profile"));
+    assert!(output.contains("100"));
+    assert!(output.contains("test::span1"));
+    assert!(output.contains("50.0%"));
+}
+
+#[test]
+fn traced_profiling_ext_trait_exported() {
+    // Verify the trait is exported (compile-time check)
+    use tauri_plugin_tracing::TracedProfilingExt;
+
+    // The trait methods require AppHandle, so we just verify it's accessible
+    fn _takes_ext<T: TracedProfilingExt<tauri::Wry>>(_: &T) {}
+}
+
+#[test]
+fn span_aware_profiling_ext_trait_exported() {
+    // Verify the trait is exported (compile-time check)
+    use tauri_plugin_tracing::SpanAwareProfilingExt;
+
+    fn _takes_ext<T: SpanAwareProfilingExt<tauri::Wry>>(_: &T) {}
+}

@@ -63,16 +63,13 @@ pub fn run() {
 #[tauri::command]
 fn run_profiled_work(app: tauri::AppHandle) -> Result<String, String> {
     // Start span-aware CPU profiling
-    app.start_span_aware_profile()
-        .map_err(|e| e.to_string())?;
+    app.start_span_aware_profile().map_err(|e| e.to_string())?;
 
     // Do some work with tracing spans
     do_work();
 
     // Stop profiling and get correlation report
-    let report = app
-        .stop_span_aware_profile()
-        .map_err(|e| e.to_string())?;
+    let report = app.stop_span_aware_profile().map_err(|e| e.to_string())?;
 
     Ok(report.to_string())
 }
