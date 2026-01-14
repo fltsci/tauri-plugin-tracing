@@ -1,3 +1,6 @@
+// Doc examples show complete Tauri programs with fn main() for clarity
+#![allow(clippy::needless_doctest_main)]
+
 //! # Tauri Plugin Tracing
 //!
 //! A Tauri plugin that integrates the [`tracing`] crate for structured logging
