@@ -34,7 +34,7 @@
 //!             .init();
 //!         Ok(())
 //!     });
-//!     // .run(tauri::generate_context!())
+//!     // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
 //! ```
 //!
 //! ## Quick Start
@@ -51,7 +51,7 @@
 //!             .with_default_subscriber()  // Let plugin set up tracing
 //!             .build(),
 //!     );
-//!     // .run(tauri::generate_context!())
+//!     // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
 //! ```
 //!
 //! ## File Logging
@@ -92,7 +92,7 @@
 //!             .init();
 //!         Ok(())
 //!     });
-//!     // .run(tauri::generate_context!())
+//!     // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
 //! ```
 //!
 //! Log files rotate daily and are written to:
@@ -141,7 +141,7 @@
 //!     let builder = setup_logger();
 //!     tauri::Builder::default()
 //!         .plugin(builder.build());
-//!         // .run(tauri::generate_context!())
+//!         // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
 //! }
 //! ```
 //!
@@ -168,28 +168,30 @@
 //!
 //! Use [`create_flame_layer()`] to add flamegraph profiling to a custom subscriber:
 //!
-//! ```rust,ignore
+//! ```no_run
 //! use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, create_flame_layer};
 //! use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 //!
-//! let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
-//! let filter = tracing_builder.build_filter();
+//! fn main() {
+//!     let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
+//!     let filter = tracing_builder.build_filter();
 //!
-//! tauri::Builder::default()
-//!     .plugin(tracing_builder.build())
-//!     .setup(move |app| {
-//!         let flame_layer = create_flame_layer(app.handle())?;
+//!     tauri::Builder::default()
+//!         .plugin(tracing_builder.build())
+//!         .setup(move |app| {
+//!             let flame_layer = create_flame_layer(app.handle())?;
 //!
-//!         Registry::default()
-//!             .with(fmt::layer())
-//!             .with(WebviewLayer::new(app.handle().clone()))
-//!             .with(flame_layer)
-//!             .with(filter)
-//!             .init();
-//!         Ok(())
-//!     })
-//!     .run(tauri::generate_context!())
-//!     .expect("error while running tauri application");
+//!             Registry::default()
+//!                 .with(flame_layer) // Must be first - typed for Registry
+//!                 .with(fmt::layer())
+//!                 .with(WebviewLayer::new(app.handle().clone()))
+//!                 .with(filter)
+//!                 .init();
+//!             Ok(())
+//!         })
+//!         .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
+//!         .expect("error while running tauri application");
+//! }
 //! ```
 //!
 //! ### Early Initialization with Flamegraph
@@ -197,7 +199,7 @@
 //! Use [`create_flame_layer_with_path()`] and [`FlameExt`] to initialize tracing
 //! before Tauri starts while still enabling frontend flamegraph generation:
 //!
-//! ```rust,ignore
+//! ```no_run
 //! use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
 //! use tracing_subscriber::{registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
 //!
@@ -212,8 +214,8 @@
 //!
 //!     // Initialize tracing early
 //!     registry()
+//!         .with(flame_layer) // Must be first - typed for Registry
 //!         .with(fmt::layer())
-//!         .with(flame_layer)
 //!         .init();
 //!
 //!     // Now start Tauri and register the guard
@@ -224,7 +226,7 @@
 //!             app.handle().register_flamegraph(flame_guard)?;
 //!             Ok(())
 //!         })
-//!         .run(tauri::generate_context!())
+//!         .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
 //!         .expect("error while running tauri application");
 //! }
 //! ```
@@ -527,13 +529,13 @@ impl Builder {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```no_run
     /// use tauri_plugin_tracing::Builder;
     ///
-    /// Builder::new()
+    /// let _plugin = Builder::new()
     ///     .with_flamegraph()
     ///     .with_default_subscriber()
-    ///     .build()
+    ///     .build::<tauri::Wry>();
     /// ```
     #[cfg(feature = "flamegraph")]
     pub fn with_flamegraph(mut self) -> Self {
@@ -904,7 +906,7 @@ impl Builder {
     ///             .with_default_subscriber()  // Opt-in to global subscriber
     ///             .build()
     ///     );
-    ///     // .run(tauri::generate_context!())
+    ///     // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
     /// ```
     pub fn with_default_subscriber(mut self) -> Self {
         self.set_default_subscriber = true;
@@ -1002,7 +1004,7 @@ impl Builder {
     ///             .init();
     ///         Ok(())
     ///     });
-    ///     // .run(tauri::generate_context!())
+    ///     // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
     /// ```
     pub fn build_filter(&self) -> Targets {
         self.filter.clone().with_default(self.log_level)
@@ -1033,7 +1035,7 @@ impl Builder {
     /// # use tauri_plugin_tracing::Builder;
     /// tauri::Builder::default()
     ///     .plugin(Builder::new().build());
-    ///     // .run(tauri::generate_context!())
+    ///     // .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
     /// ```
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
         let log_level = self.log_level;

@@ -36,23 +36,54 @@
 //!
 //! ## With AppHandle (in Tauri setup)
 //!
-//! ```rust,ignore
-//! let flame_layer = create_flame_layer(app.handle())?;
+//! ```no_run
+//! use tauri_plugin_tracing::{Builder, create_flame_layer, WebviewLayer};
+//! use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Registry};
+//!
+//! fn main() {
+//!     tauri::Builder::default()
+//!         .plugin(Builder::new().build())
+//!         .setup(|app| {
+//!             let flame_layer = create_flame_layer(app.handle())?;
+//!             Registry::default()
+//!                 .with(flame_layer) // Must be first - typed for Registry
+//!                 .with(WebviewLayer::new(app.handle().clone()))
+//!                 .init();
+//!             Ok(())
+//!         })
+//!         .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
+//!         .expect("error running tauri");
+//! }
 //! ```
 //!
 //! ## Early Initialization (before Tauri)
 //!
-//! ```rust,ignore
-//! use tauri_plugin_tracing::{create_flame_layer_with_path, FlameExt};
+//! ```no_run
+//! use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
+//! use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, fmt};
 //!
-//! // Create layer before Tauri starts
-//! let (flame_layer, flame_guard) = create_flame_layer_with_path(&log_dir.join("profile.folded"))?;
+//! fn main() {
+//!     let log_dir = std::env::temp_dir().join("my-app");
+//!     std::fs::create_dir_all(&log_dir).unwrap();
 //!
-//! // Add to your subscriber
-//! registry().with(flame_layer).init();
+//!     let (flame_layer, flame_guard) = create_flame_layer_with_path(
+//!         &log_dir.join("profile.folded")
+//!     ).unwrap();
 //!
-//! // Later, in Tauri setup, register the guard so JS commands work
-//! app.handle().register_flamegraph(flame_guard)?;
+//!     tracing_subscriber::registry()
+//!         .with(flame_layer) // Must be first - typed for Registry
+//!         .with(fmt::layer())
+//!         .init();
+//!
+//!     tauri::Builder::default()
+//!         .plugin(Builder::new().build())
+//!         .setup(move |app| {
+//!             app.handle().register_flamegraph(flame_guard)?;
+//!             Ok(())
+//!         })
+//!         .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
+//!         .expect("error running tauri");
+//! }
 //! ```
 
 use std::fs::File;
@@ -110,22 +141,32 @@ pub struct FlameGuard {
 ///
 /// # Example
 ///
-/// ```rust,ignore
-/// use tauri_plugin_tracing::{create_flame_layer_with_path, FlameExt};
-/// use tracing_subscriber::{registry, layer::SubscriberExt, util::SubscriberInitExt};
+/// ```no_run
+/// use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
+/// use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, fmt};
 ///
-/// let log_dir = std::env::temp_dir().join("my-app");
-/// std::fs::create_dir_all(&log_dir)?;
+/// fn main() {
+///     let log_dir = std::env::temp_dir().join("my-app");
+///     std::fs::create_dir_all(&log_dir).unwrap();
 ///
-/// let (flame_layer, flame_guard) = create_flame_layer_with_path(&log_dir.join("profile.folded"))?;
+///     let (flame_layer, flame_guard) = create_flame_layer_with_path(
+///         &log_dir.join("profile.folded")
+///     ).unwrap();
 ///
-/// registry()
-///     .with(tracing_subscriber::fmt::layer())
-///     .with(flame_layer)
-///     .init();
+///     tracing_subscriber::registry()
+///         .with(flame_layer) // Must be first - typed for Registry
+///         .with(fmt::layer())
+///         .init();
 ///
-/// // Later, in Tauri setup:
-/// // app.handle().register_flamegraph(flame_guard)?;
+///     tauri::Builder::default()
+///         .plugin(Builder::new().build())
+///         .setup(move |app| {
+///             app.handle().register_flamegraph(flame_guard)?;
+///             Ok(())
+///         })
+///         .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
+///         .expect("error running tauri");
+/// }
 /// ```
 pub fn create_flame_layer_with_path(folded_path: &Path) -> Result<(BoxedFlameLayer, FlameGuard)> {
     use tracing_subscriber::Layer;
@@ -157,15 +198,32 @@ pub trait FlameExt<R: Runtime> {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
-    /// use tauri_plugin_tracing::FlameExt;
+    /// ```no_run
+    /// use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
+    /// use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, fmt};
     ///
-    /// tauri::Builder::default()
-    ///     .plugin(tauri_plugin_tracing::Builder::new().build())
-    ///     .setup(move |app| {
-    ///         app.handle().register_flamegraph(flame_guard)?;
-    ///         Ok(())
-    ///     })
+    /// fn main() {
+    ///     let log_dir = std::env::temp_dir().join("my-app");
+    ///     std::fs::create_dir_all(&log_dir).unwrap();
+    ///
+    ///     let (flame_layer, flame_guard) = create_flame_layer_with_path(
+    ///         &log_dir.join("profile.folded")
+    ///     ).unwrap();
+    ///
+    ///     tracing_subscriber::registry()
+    ///         .with(flame_layer) // Must be first - typed for Registry
+    ///         .with(fmt::layer())
+    ///         .init();
+    ///
+    ///     tauri::Builder::default()
+    ///         .plugin(Builder::new().build())
+    ///         .setup(move |app| {
+    ///             app.handle().register_flamegraph(flame_guard)?;
+    ///             Ok(())
+    ///         })
+    ///         .run(tauri::generate_context!("examples/default-subscriber/src-tauri/tauri.conf.json"))
+    ///         .expect("error running tauri");
+    /// }
     /// ```
     fn register_flamegraph(&self, guard: FlameGuard) -> Result<()>;
 }
