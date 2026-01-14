@@ -48,12 +48,15 @@ pub fn log<R: Runtime>(
 /// Returns the path to the generated SVG file.
 #[cfg(feature = "flamegraph")]
 #[tauri::command]
-pub async fn generate_flamegraph<R: Runtime>(app: AppHandle<R>) -> crate::Result<String> {
+pub fn generate_flamegraph<R: Runtime>(app: AppHandle<R>) -> crate::Result<String> {
     use crate::flamegraph::{FlameState, generate_flamegraph_svg};
     use tauri::Manager;
 
     let state = app.state::<FlameState>();
-    let path_lock = state.folded_path.lock().await;
+    let path_lock = state
+        .folded_path
+        .lock()
+        .map_err(|e| crate::Error::LockPoisoned(e.to_string()))?;
 
     let folded_path = path_lock
         .as_ref()
@@ -61,7 +64,10 @@ pub async fn generate_flamegraph<R: Runtime>(app: AppHandle<R>) -> crate::Result
 
     // Flush the guard to ensure all data is written
     {
-        let mut guard_lock = state.guard.lock().await;
+        let mut guard_lock = state
+            .guard
+            .lock()
+            .map_err(|e| crate::Error::LockPoisoned(e.to_string()))?;
         if let Some(guard) = guard_lock.take() {
             drop(guard);
         }
@@ -77,12 +83,15 @@ pub async fn generate_flamegraph<R: Runtime>(app: AppHandle<R>) -> crate::Result
 /// Returns the path to the generated SVG file.
 #[cfg(feature = "flamegraph")]
 #[tauri::command]
-pub async fn generate_flamechart<R: Runtime>(app: AppHandle<R>) -> crate::Result<String> {
+pub fn generate_flamechart<R: Runtime>(app: AppHandle<R>) -> crate::Result<String> {
     use crate::flamegraph::{FlameState, generate_flamechart_svg};
     use tauri::Manager;
 
     let state = app.state::<FlameState>();
-    let path_lock = state.folded_path.lock().await;
+    let path_lock = state
+        .folded_path
+        .lock()
+        .map_err(|e| crate::Error::LockPoisoned(e.to_string()))?;
 
     let folded_path = path_lock
         .as_ref()
@@ -90,7 +99,10 @@ pub async fn generate_flamechart<R: Runtime>(app: AppHandle<R>) -> crate::Result
 
     // Flush the guard to ensure all data is written
     {
-        let mut guard_lock = state.guard.lock().await;
+        let mut guard_lock = state
+            .guard
+            .lock()
+            .map_err(|e| crate::Error::LockPoisoned(e.to_string()))?;
         if let Some(guard) = guard_lock.take() {
             drop(guard);
         }

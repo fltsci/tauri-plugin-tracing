@@ -41,6 +41,10 @@ pub enum Error {
     /// The requested feature is not yet implemented.
     #[error("Not implemented")]
     NotImplemented,
+
+    /// A mutex lock was poisoned (another thread panicked while holding the lock).
+    #[error("Lock poisoned: {0}")]
+    LockPoisoned(String),
 }
 
 impl Serialize for Error {
