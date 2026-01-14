@@ -40,6 +40,7 @@ export declare const cleanUntypedValue: (value: unknown) => string;
  * - `%d`, `%i` - Integer
  * - `%f` - Float
  * - `%o`, `%O` - Object (JSON)
+ * - `%c` - CSS styling (consumed but not rendered)
  * - `%%` - Literal percent sign
  *
  * @param format - The format string

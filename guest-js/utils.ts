@@ -71,6 +71,7 @@ export const cleanUntypedValue = (value: unknown): string =>
  * - `%d`, `%i` - Integer
  * - `%f` - Float
  * - `%o`, `%O` - Object (JSON)
+ * - `%c` - CSS styling (consumed but not rendered)
  * - `%%` - Literal percent sign
  *
  * @param format - The format string
@@ -82,7 +83,7 @@ export function formatPrintf(
   args: unknown[]
 ): [string, unknown[]] {
   const remainingArgs = [...args]
-  const result = format.replace(/%([sdifooO%])/g, (match, specifier) => {
+  const result = format.replace(/%([sdifooOc%])/g, (match, specifier) => {
     if (specifier === '%') return '%'
     if (remainingArgs.length === 0) return match
 
@@ -98,6 +99,9 @@ export function formatPrintf(
       case 'o':
       case 'O':
         return JSON.stringify(arg, getCircularReplacer())
+      case 'c':
+        // CSS styling - consume the argument but don't render (no CSS in terminal)
+        return ''
       default:
         return match
     }
