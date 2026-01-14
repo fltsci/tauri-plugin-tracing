@@ -99,6 +99,27 @@ describe('formatPrintf', () => {
     const [result2] = formatPrintf('%o', [null])
     expect(result2).toBe('null')
   })
+
+  it('handles %c CSS styling (strips styling)', () => {
+    const [result, remaining] = formatPrintf('%cHello', ['color: red'])
+    expect(result).toBe('Hello')
+    expect(remaining).toEqual([])
+  })
+
+  it('handles multiple %c CSS specifiers', () => {
+    const [result, remaining] = formatPrintf('%c[·] %cReact Scan', [
+      'font-weight:bold;color:#7a68e8;font-size:20px;',
+      'font-weight:bold;font-size:14px;'
+    ])
+    expect(result).toBe('[·] React Scan')
+    expect(remaining).toEqual([])
+  })
+
+  it('handles %c mixed with other specifiers', () => {
+    const [result, remaining] = formatPrintf('%cCount: %d', ['color: blue', 42])
+    expect(result).toBe('Count: 42')
+    expect(remaining).toEqual([])
+  })
 })
 
 describe('getCircularReplacer', () => {

@@ -109,6 +109,7 @@ const cleanUntypedValue = (value) => stripAnsi(JSON.stringify(value, getCircular
  * - `%d`, `%i` - Integer
  * - `%f` - Float
  * - `%o`, `%O` - Object (JSON)
+ * - `%c` - CSS styling (consumed but not rendered)
  * - `%%` - Literal percent sign
  *
  * @param format - The format string
@@ -117,7 +118,7 @@ const cleanUntypedValue = (value) => stripAnsi(JSON.stringify(value, getCircular
  */
 function formatPrintf(format, args) {
     const remainingArgs = [...args];
-    const result = format.replace(/%([sdifooO%])/g, (match, specifier) => {
+    const result = format.replace(/%([sdifooOc%])/g, (match, specifier) => {
         if (specifier === '%')
             return '%';
         if (remainingArgs.length === 0)
@@ -134,6 +135,9 @@ function formatPrintf(format, args) {
             case 'o':
             case 'O':
                 return JSON.stringify(arg, getCircularReplacer());
+            case 'c':
+                // CSS styling - consume the argument but don't render (no CSS in terminal)
+                return '';
             default:
                 return match;
         }
