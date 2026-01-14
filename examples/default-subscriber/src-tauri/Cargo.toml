@@ -1,33 +1,33 @@
 [package]
-name = "example-default-subscriber"
-version = "0.1.0"
-description = "Example using with_default_subscriber()"
 authors = ["Flight Science"]
-license = "MIT"
-repository = ""
+description = "Example using with_default_subscriber()"
 edition = "2024"
+license = "MIT"
+name = "example-default-subscriber"
+repository = ""
+version = "0.1.0"
 
 [lints]
 workspace = true
 
 [lib]
+crate-type = ["cdylib", "rlib", "staticlib"]
 name = "example_default_subscriber_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.5.3", default-features = false, features = [
+tauri-build = { default-features = false, features = [
   "codegen",
-] }
+], version = "2.5.3" }
 
 [dependencies]
 tauri.workspace = true
+tauri-plugin-tracing = { features = [
+  "colored",
+  "flamegraph",
+  "specta",
+], path = "../../../" }
 tracing.workspace = true
 tracing-subscriber.workspace = true
-tauri-plugin-tracing = { path = "../../../", features = [
-  "colored",
-  "specta",
-  "flamegraph",
-] }
 
 [dev-dependencies]
 serde_json = "1"
