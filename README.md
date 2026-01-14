@@ -55,7 +55,6 @@ error('Something went wrong');
 
 - **`colored`** - ANSI color output in terminal
 - **`specta`** - TypeScript type generation
-- **`timing`** - Performance timing with `time()` / `timeEnd()`
 - **`flamegraph`** - Performance profiling with flamegraph/flamechart generation
 
 ### Log Targets
@@ -128,18 +127,6 @@ Builder::new()
     .with_layer(otel_layer)
     .with_default_subscriber()
     .build()
-```
-
-### Performance Timing
-
-Requires the `timing` feature.
-
-```typescript
-import { time, timeEnd } from '@fltsci/tauri-plugin-tracing';
-
-time('database-query');
-const results = await db.query('SELECT * FROM users');
-timeEnd('database-query');  // Logs: "database-query: 42.123ms"
 ```
 
 ### Performance Profiling
