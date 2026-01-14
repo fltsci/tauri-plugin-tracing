@@ -186,6 +186,41 @@ pub fn create_flame_layer<R: Runtime>(app_handle: &AppHandle<R>) -> Result<Boxed
     Ok(layer.boxed())
 }
 
+/// Simplifies thread names in folded stack lines.
+///
+/// Transforms `ThreadId(22)-tokio-runtime-worker;span1;span2 123` into
+/// `tokio-worker;span1;span2 123` to consolidate stacks from different worker threads.
+fn simplify_thread_names(line: &str) -> String {
+    // Find the space before the count (last space in line)
+    let (stack, count) = match line.rfind(' ') {
+        Some(idx) => (&line[..idx], &line[idx..]),
+        None => return line.to_string(),
+    };
+
+    // Replace ThreadId(N)-tokio-runtime-worker with just "tokio-worker"
+    let simplified = if stack.starts_with("ThreadId(") {
+        if let Some(dash_idx) = stack.find(")-") {
+            let after_id = &stack[dash_idx + 2..];
+            // Consolidate all tokio runtime workers
+            if after_id.starts_with("tokio-runtime-worker") {
+                if after_id.len() > 20 {
+                    format!("tokio-worker{}", &after_id[20..])
+                } else {
+                    "tokio-worker".to_string()
+                }
+            } else {
+                after_id.to_string()
+            }
+        } else {
+            stack.to_string()
+        }
+    } else {
+        stack.to_string()
+    };
+
+    format!("{simplified}{count}")
+}
+
 /// Generates a flamegraph SVG from the folded stack data.
 ///
 /// Returns the path to the generated SVG file.
@@ -197,7 +232,12 @@ pub fn generate_flamegraph_svg(folded_path: &std::path::Path) -> Result<PathBuf>
 
     let file = File::open(folded_path)?;
     let reader = BufReader::new(file);
-    let lines: Vec<String> = reader.lines().collect::<std::io::Result<Vec<_>>>()?;
+    let lines: Vec<String> = reader
+        .lines()
+        .collect::<std::io::Result<Vec<_>>>()?
+        .into_iter()
+        .map(|line| simplify_thread_names(&line))
+        .collect();
 
     let mut options = Options::default();
     options.title = "Flamegraph".to_string();
@@ -224,7 +264,12 @@ pub fn generate_flamechart_svg(folded_path: &std::path::Path) -> Result<PathBuf>
 
     let file = File::open(folded_path)?;
     let reader = BufReader::new(file);
-    let lines: Vec<String> = reader.lines().collect::<std::io::Result<Vec<_>>>()?;
+    let lines: Vec<String> = reader
+        .lines()
+        .collect::<std::io::Result<Vec<_>>>()?
+        .into_iter()
+        .map(|line| simplify_thread_names(&line))
+        .collect();
 
     let mut options = Options::default();
     options.title = "Flamechart".to_string();
