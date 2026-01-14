@@ -133,12 +133,76 @@ Builder::new()
 
 Requires the `flamegraph` feature.
 
+**With default subscriber:**
+
 ```rust
 Builder::new()
     .with_flamegraph()
     .with_default_subscriber()
     .build()
 ```
+
+**With custom subscriber:**
+
+```rust
+use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, create_flame_layer};
+use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
+
+let builder = Builder::new().with_max_level(LevelFilter::DEBUG);
+let filter = builder.build_filter();
+
+tauri::Builder::default()
+    .plugin(builder.build())
+    .setup(move |app| {
+        let flame_layer = create_flame_layer(app.handle())?;
+
+        Registry::default()
+            .with(fmt::layer())
+            .with(WebviewLayer::new(app.handle().clone()))
+            .with(flame_layer)
+            .with(filter)
+            .init();
+        Ok(())
+    })
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+```
+
+**Early initialization (before Tauri starts):**
+
+```rust
+use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
+use tracing_subscriber::{registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
+
+fn main() {
+    let log_dir = std::env::temp_dir().join("my-app");
+    std::fs::create_dir_all(&log_dir).unwrap();
+
+    // Create flame layer before Tauri starts
+    let (flame_layer, flame_guard) = create_flame_layer_with_path(
+        &log_dir.join("profile.folded")
+    ).unwrap();
+
+    // Initialize tracing early
+    registry()
+        .with(fmt::layer())
+        .with(flame_layer)
+        .init();
+
+    // Now start Tauri and register the guard
+    tauri::Builder::default()
+        .plugin(Builder::new().build())
+        .setup(move |app| {
+            // Register the guard so JS can generate flamegraphs
+            app.handle().register_flamegraph(flame_guard)?;
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+```
+
+**Generate visualizations from JavaScript:**
 
 ```typescript
 import { generateFlamegraph, generateFlamechart } from '@fltsci/tauri-plugin-tracing';

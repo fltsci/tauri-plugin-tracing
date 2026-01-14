@@ -148,6 +148,100 @@
 //! This approach is useful when you need logging available before Tauri starts,
 //! or when you want full control over the subscriber configuration.
 //!
+//! ## Flamegraph Profiling
+//!
+//! The `flamegraph` feature enables performance profiling with flamegraph/flamechart
+//! visualizations.
+//!
+//! ### With Default Subscriber
+//!
+//! ```rust,no_run
+//! # use tauri_plugin_tracing::{Builder, LevelFilter};
+//! Builder::new()
+//!     .with_max_level(LevelFilter::DEBUG)
+//!     .with_flamegraph()
+//!     .with_default_subscriber()
+//!     .build::<tauri::Wry>();
+//! ```
+//!
+//! ### With Custom Subscriber
+//!
+//! Use [`create_flame_layer()`] to add flamegraph profiling to a custom subscriber:
+//!
+//! ```rust,ignore
+//! use tauri::Manager;
+//! use tauri_plugin_tracing::{Builder, WebviewLayer, LevelFilter, create_flame_layer};
+//! use tracing_subscriber::{Registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
+//!
+//! let tracing_builder = Builder::new().with_max_level(LevelFilter::DEBUG);
+//! let filter = tracing_builder.build_filter();
+//!
+//! tauri::Builder::default()
+//!     .plugin(tracing_builder.build())
+//!     .setup(move |app| {
+//!         let flame_layer = create_flame_layer(app.handle())?;
+//!
+//!         Registry::default()
+//!             .with(fmt::layer())
+//!             .with(WebviewLayer::new(app.handle().clone()))
+//!             .with(flame_layer)
+//!             .with(filter)
+//!             .init();
+//!         Ok(())
+//!     })
+//!     .run(tauri::generate_context!())
+//!     .expect("error while running tauri application");
+//! ```
+//!
+//! ### Early Initialization with Flamegraph
+//!
+//! Use [`create_flame_layer_with_path()`] and [`FlameExt`] to initialize tracing
+//! before Tauri starts while still enabling frontend flamegraph generation:
+//!
+//! ```rust,ignore
+//! use tauri_plugin_tracing::{Builder, create_flame_layer_with_path, FlameExt};
+//! use tracing_subscriber::{registry, layer::SubscriberExt, util::SubscriberInitExt, fmt};
+//!
+//! fn main() {
+//!     let log_dir = std::env::temp_dir().join("my-app");
+//!     std::fs::create_dir_all(&log_dir).unwrap();
+//!
+//!     // Create flame layer before Tauri starts
+//!     let (flame_layer, flame_guard) = create_flame_layer_with_path(
+//!         &log_dir.join("profile.folded")
+//!     ).unwrap();
+//!
+//!     // Initialize tracing early
+//!     registry()
+//!         .with(fmt::layer())
+//!         .with(flame_layer)
+//!         .init();
+//!
+//!     // Now start Tauri and register the guard
+//!     tauri::Builder::default()
+//!         .plugin(Builder::new().build())
+//!         .setup(move |app| {
+//!             // Register the guard so JS can generate flamegraphs
+//!             app.handle().register_flamegraph(flame_guard)?;
+//!             Ok(())
+//!         })
+//!         .run(tauri::generate_context!())
+//!         .expect("error while running tauri application");
+//! }
+//! ```
+//!
+//! Then generate visualizations from JavaScript:
+//!
+//! ```javascript
+//! import { generateFlamegraph, generateFlamechart } from '@fltsci/tauri-plugin-tracing';
+//!
+//! // Generate a flamegraph (collapses identical stack frames)
+//! const flamegraphPath = await generateFlamegraph();
+//!
+//! // Generate a flamechart (preserves event ordering)
+//! const flamechartPath = await generateFlamechart();
+//! ```
+//!
 //! ## JavaScript API
 //!
 //! ```javascript
