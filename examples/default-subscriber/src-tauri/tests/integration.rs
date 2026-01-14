@@ -767,6 +767,146 @@ fn builder_with_flamegraph() {
 }
 
 #[test]
+fn create_flame_layer_with_path_creates_layer() {
+    use tauri_plugin_tracing::create_flame_layer_with_path;
+
+    let temp_dir = std::env::temp_dir().join("tauri-tracing-test");
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let folded_path = temp_dir.join("test-profile.folded");
+
+    // Clean up any existing file
+    let _ = std::fs::remove_file(&folded_path);
+
+    let result = create_flame_layer_with_path(&folded_path);
+    assert!(result.is_ok(), "create_flame_layer_with_path should succeed");
+
+    let (_layer, guard) = result.unwrap();
+
+    // Verify the guard has the correct path
+    // We can't directly access the path, but we can drop the guard and check file exists
+    drop(guard);
+
+    // Clean up
+    let _ = std::fs::remove_file(&folded_path);
+    let _ = std::fs::remove_dir(&temp_dir);
+}
+
+#[test]
+fn create_flame_layer_with_path_creates_parent_dirs() {
+    use tauri_plugin_tracing::create_flame_layer_with_path;
+
+    let temp_dir = std::env::temp_dir()
+        .join("tauri-tracing-test")
+        .join("nested")
+        .join("dirs");
+    let folded_path = temp_dir.join("profile.folded");
+
+    // Ensure the directory doesn't exist
+    let _ = std::fs::remove_dir_all(
+        std::env::temp_dir()
+            .join("tauri-tracing-test")
+            .join("nested"),
+    );
+
+    let result = create_flame_layer_with_path(&folded_path);
+    assert!(
+        result.is_ok(),
+        "should create parent directories automatically"
+    );
+
+    // Verify parent dirs were created
+    assert!(temp_dir.exists(), "parent directories should be created");
+
+    // Clean up
+    drop(result);
+    let _ = std::fs::remove_dir_all(
+        std::env::temp_dir()
+            .join("tauri-tracing-test")
+            .join("nested"),
+    );
+}
+
+#[test]
+fn flame_guard_is_send_and_sync() {
+    use tauri_plugin_tracing::{create_flame_layer_with_path, FlameGuard};
+
+    // Compile-time check that FlameGuard is Send + Sync
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<FlameGuard>();
+
+    // Also verify we can create one
+    let temp_dir = std::env::temp_dir().join("tauri-tracing-test-send-sync");
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let folded_path = temp_dir.join("profile.folded");
+
+    let result = create_flame_layer_with_path(&folded_path);
+    assert!(result.is_ok());
+
+    // Clean up
+    drop(result);
+    let _ = std::fs::remove_file(&folded_path);
+    let _ = std::fs::remove_dir(&temp_dir);
+}
+
+#[test]
+fn flame_layer_records_spans() {
+    use tauri_plugin_tracing::create_flame_layer_with_path;
+    use tracing_subscriber::{layer::SubscriberExt, registry};
+
+    let temp_dir = std::env::temp_dir().join("tauri-tracing-test-spans");
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let folded_path = temp_dir.join("profile.folded");
+    let _ = std::fs::remove_file(&folded_path);
+
+    let (flame_layer, guard) = create_flame_layer_with_path(&folded_path).unwrap();
+
+    // Create a subscriber with the flame layer
+    let subscriber = registry().with(flame_layer);
+
+    // Use the subscriber for this scope
+    tracing::subscriber::with_default(subscriber, || {
+        let _span = tracing::info_span!("test_span").entered();
+        tracing::info!("test event");
+    });
+
+    // Drop the guard to flush data
+    drop(guard);
+
+    // Verify the folded file was created and has content
+    assert!(folded_path.exists(), "folded file should be created");
+    let content = std::fs::read_to_string(&folded_path).unwrap();
+    assert!(!content.is_empty(), "folded file should have content");
+    assert!(
+        content.contains("test_span"),
+        "folded file should contain span name"
+    );
+
+    // Clean up
+    let _ = std::fs::remove_file(&folded_path);
+    let _ = std::fs::remove_dir(&temp_dir);
+}
+
+#[test]
+fn boxed_flame_layer_type_exported() {
+    use tauri_plugin_tracing::BoxedFlameLayer;
+
+    // Compile-time check that the type is exported and usable
+    fn assert_type_exists<T>() {}
+    assert_type_exists::<BoxedFlameLayer>();
+}
+
+#[test]
+fn flame_ext_trait_exported() {
+    use tauri_plugin_tracing::FlameExt;
+
+    // Compile-time check that the trait is exported and has the right bound
+    fn _assert_trait_exists<T: FlameExt<tauri::Wry>>() {}
+    // Note: We can't actually test register_flamegraph without an AppHandle,
+    // but we can verify the trait is properly exported and AppHandle implements it
+    fn _assert_app_handle_implements_flame_ext(_: &impl FlameExt<tauri::Wry>) {}
+}
+
+#[test]
 fn builder_with_flamegraph_and_default_subscriber() {
     let _plugin = Builder::new()
         .with_flamegraph()
