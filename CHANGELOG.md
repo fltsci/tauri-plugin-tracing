@@ -1,5 +1,12 @@
 # Changelog
 
+## \[0.3.1]
+
+- [`b61f9ab`](https://github.com/fltsci/tauri-plugin-tracing/commit/b61f9abc5426d2d36df39344bbd4bb0ce9912a6e) ([#89](https://github.com/fltsci/tauri-plugin-tracing/pull/89) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add crates.io, docs.rs, npm, license, and CI status badges to README.
+- [`26b5482`](https://github.com/fltsci/tauri-plugin-tracing/commit/26b54828df9b4bf687ae44d7406bb30aa04784ef) ([#92](https://github.com/fltsci/tauri-plugin-tracing/pull/92) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Handle `%c` CSS styling format specifier in console messages. The CSS argument is consumed but not rendered since terminals don't support CSS styling.
+- [`393ed48`](https://github.com/fltsci/tauri-plugin-tracing/commit/393ed48cbe3c5d1b8fe2dbbd2b7bdd2c89996d01) ([#91](https://github.com/fltsci/tauri-plugin-tracing/pull/91) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Convert doc examples from `ignore` to `no_run` for compiler verification. Fix layer ordering in flamegraph examples (BoxedFlameLayer must be first).
+- [`49e3b90`](https://github.com/fltsci/tauri-plugin-tracing/commit/49e3b90530e551dedd98c54599d684af2608f327) ([#94](https://github.com/fltsci/tauri-plugin-tracing/pull/94) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Automatically update README version when covector runs version bumps.
+
 ## \[0.3.0]
 
 - [`061b015`](https://github.com/fltsci/tauri-plugin-tracing/commit/061b0159e4b69055d6adfa98a3c40712640fc58b) ([#84](https://github.com/fltsci/tauri-plugin-tracing/pull/84) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Clarify that the flamegraph feature measures span timing (wall-clock time), not CPU time. Updated documentation with appropriate use cases and limitations.
