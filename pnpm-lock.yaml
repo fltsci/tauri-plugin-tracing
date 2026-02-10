@@ -14,9 +14,6 @@ importers:
       '@tauri-apps/api':
         specifier: 2.9.1
         version: 2.9.1
-      covector:
-        specifier: ^0.12.4
-        version: 0.12.4(mocha@10.8.2)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.8
@@ -30,6 +27,9 @@ importers:
       '@rollup/plugin-typescript':
         specifier: ^12.3.0
         version: 12.3.0(rollup@4.53.3)(tslib@2.8.1)(typescript@5.9.3)
+      covector:
+        specifier: ^0.12.4
+        version: 0.12.4(mocha@10.8.2)
       prettier:
         specifier: 3.7.4
         version: 3.7.4
@@ -1021,7 +1021,7 @@ packages:
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
@@ -1794,7 +1794,7 @@ snapshots:
 
   '@covector/command@0.8.0(mocha@10.8.2)':
     dependencies:
-      '@effection/process': 2.1.4
+      '@effection/process': 2.1.4(mocha@10.8.2)
       effection: 2.0.8(mocha@10.8.2)
     transitivePeerDependencies:
       - encoding
@@ -1846,12 +1846,15 @@ snapshots:
       effection: 2.0.8(mocha@10.8.2)
       mocha: 10.8.2
 
-  '@effection/process@2.1.4':
+  '@effection/process@2.1.4(mocha@10.8.2)':
     dependencies:
       cross-spawn: 7.0.6
       ctrlc-windows: 2.2.0
       effection: 2.0.8(mocha@10.8.2)
       shellwords: 0.1.1
+    transitivePeerDependencies:
+      - encoding
+      - mocha
 
   '@effection/stream@2.0.6':
     dependencies:
