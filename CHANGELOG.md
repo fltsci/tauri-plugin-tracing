@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.3.3]
+
+- [`5553d6f`](https://github.com/fltsci/tauri-plugin-tracing/commit/5553d6f021b061252cec3cd40224bc8245c860d2) ([#98](https://github.com/fltsci/tauri-plugin-tracing/pull/98) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update specta dependency to 2.0.0-rc.23.
+- [`3d4eeb5`](https://github.com/fltsci/tauri-plugin-tracing/commit/3d4eeb5d4752cf6fa5e9e2301ef5507942f70b2d) ([#99](https://github.com/fltsci/tauri-plugin-tracing/pull/99) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update specta dependency to 2.0.0-rc.24.
+
 ## \[0.3.2]
 
 - [`97f668f`](https://github.com/fltsci/tauri-plugin-tracing/commit/97f668f1d021364aeb4c0f8e2a70d7899969d480) ([#95](https://github.com/fltsci/tauri-plugin-tracing/pull/95) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Add CPU profiling integration with span correlation via new `profiling` feature. Includes `TracedProfilingExt` for automatic span/logging around profiles, `SpanTimingLayer` for capturing span timing, and `SpanAwareProfilingExt` for correlating CPU samples with active tracing spans.
