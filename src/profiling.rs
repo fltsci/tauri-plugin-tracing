@@ -407,7 +407,7 @@ fn analyze_span_events(events: &[SpanEvent], duration_us: u64) -> Vec<ActiveSpan
         .collect();
 
     // Sort by total time descending
-    active_spans.sort_by(|a, b| b.total_time_us.cmp(&a.total_time_us));
+    active_spans.sort_by_key(|s| std::cmp::Reverse(s.total_time_us));
 
     active_spans
 }

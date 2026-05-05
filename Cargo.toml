@@ -40,7 +40,7 @@ memchr = "2.7.4"
 rolling-file = "0.2.0"
 serde = { default-features = false, version = "1.0.228" }
 serde_repr = "0.1.20"
-specta = { features = ["derive"], version = "=2.0.0-rc.23" }
+specta = { features = ["derive"], version = "=2.0.0-rc.24" }
 tauri = { version = "2.9.5" }
 thiserror = { default-features = false, version = "2.0.17" }
 time = { default-features = false, features = [
