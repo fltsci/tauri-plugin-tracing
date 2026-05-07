@@ -1,5 +1,15 @@
 # Changelog
 
+## \[0.3.4]
+
+- [`59d3f0a`](https://github.com/fltsci/tauri-plugin-tracing/commit/59d3f0af88dd41b28aa2f46685ec3ddd97634aa7) ([#101](https://github.com/fltsci/tauri-plugin-tracing/pull/101) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update Rust and JS dependencies to latest semver-compatible versions.
+- [`59d3f0a`](https://github.com/fltsci/tauri-plugin-tracing/commit/59d3f0af88dd41b28aa2f46685ec3ddd97634aa7) ([#101](https://github.com/fltsci/tauri-plugin-tracing/pull/101) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Pin Rust toolchain to 1.95.0 via `rust-toolchain.toml`.
+
+  Different rustfmt builds can produce different layouts even with the same `--edition` flag, which surfaces as "works locally, fails CI" formatter drift. Pinning the channel makes both contributor environments and CI deterministic.
+
+  Profile is `default`, which includes `rustfmt` and `clippy` (plus rustc, cargo, rust-std, rust-docs). Contributors with `rustup` installed will auto-fetch 1.95.0 on first cargo invocation in the project directory; no extra setup required.
+- [`59d3f0a`](https://github.com/fltsci/tauri-plugin-tracing/commit/59d3f0af88dd41b28aa2f46685ec3ddd97634aa7) ([#101](https://github.com/fltsci/tauri-plugin-tracing/pull/101) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update specta dependency to 2.0.0-rc.25.
+
 ## \[0.3.3]
 
 - [`5553d6f`](https://github.com/fltsci/tauri-plugin-tracing/commit/5553d6f021b061252cec3cd40224bc8245c860d2) ([#98](https://github.com/fltsci/tauri-plugin-tracing/pull/98) by [@johncarmack1984](https://github.com/fltsci/tauri-plugin-tracing/../../johncarmack1984)) Update specta dependency to 2.0.0-rc.23.
