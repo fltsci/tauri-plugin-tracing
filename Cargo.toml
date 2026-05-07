@@ -31,27 +31,27 @@ unwrap_used = "deny"
 workspace = true
 
 [build-dependencies]
-tauri-plugin = { features = ["build"], version = "2.5.2" }
+tauri-plugin = { features = ["build"], version = "2.6.1" }
 
 [workspace.dependencies]
 ahash = { features = ["serde"], version = "0.8.12" }
-colored = { version = "3.0.0" }
-memchr = "2.7.4"
+colored = { version = "3.1.1" }
+memchr = "2.8.0"
 rolling-file = "0.2.0"
 serde = { default-features = false, version = "1.0.228" }
 serde_repr = "0.1.20"
-specta = { features = ["derive"], version = "=2.0.0-rc.24" }
-tauri = { version = "2.9.5" }
-thiserror = { default-features = false, version = "2.0.17" }
+specta = { features = ["derive"], version = "=2.0.0-rc.25" }
+tauri = { version = "2.11.1" }
+thiserror = { default-features = false, version = "2.0.18" }
 time = { default-features = false, features = [
   "formatting",
   "local-offset",
-], version = "0.3.44" }
-tokio = { features = ["full"], version = "1.48.0" }
-tracing = { version = "0.1.43" }
-tracing-appender = "0.2.4"
-tracing-core = "0.1.35"
-tracing-subscriber = { features = ["env-filter", "time"], version = "0.3.22" }
+], version = "0.3.47" }
+tokio = { features = ["full"], version = "1.52.2" }
+tracing = { version = "0.1.44" }
+tracing-appender = "0.2.5"
+tracing-core = "0.1.36"
+tracing-subscriber = { features = ["env-filter", "time"], version = "0.3.23" }
 
 [dependencies]
 colored = { optional = true, workspace = true }
