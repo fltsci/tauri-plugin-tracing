@@ -72,6 +72,8 @@ tracing-core.workspace = true
 tracing-flame = { optional = true, version = "0.2" }
 tracing-subscriber.workspace = true
 
+[target.'cfg(target_os = "ios")'.dependencies]
+swift-rs = "1"
 
 # default to small, optimized release binaries
 [profile.release]
